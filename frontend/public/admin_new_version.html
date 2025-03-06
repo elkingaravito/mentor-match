@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matchmaking - Panel de Administración</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: #fff;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .sidebar-header .material-icons {
+            font-size: 24px;
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+        
+        .sidebar-header h1 {
+            font-size: 18px;
+            color: var(--primary-color);
+            margin: 0;
+        }
+        
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+        
+        .menu-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .menu-item:hover {
+            background-color: #f5f5f5;
+            color: var(--primary-color);
+        }
+        
+        .menu-item.active {
+            background-color: #f0f0f0;
+            color: var(--primary-color);
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .menu-item .material-icons {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .topbar-title h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: 500;
+        }
+        
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .user-name {
+            font-weight: 500;
+        }
+        
+        .user-role {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .admin-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .admin-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .admin-card-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .admin-card-action {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .search-bar {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 14px;
+        }
+        
+        .search-button {
+            padding: 10px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background-color: #f8f8f8;
+            font-weight: 500;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: #e6f7e6;
+            color: #2e7d32;
+        }
+        
+        .status-inactive {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .action-button {
+            padding: 5px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .action-button:hover {
+            color: var(--primary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <span class="material-icons">handshake</span>
+                <h1>Mentor Match</h1>
+            </div>
+            <div class="sidebar-menu">
+                <a href="admin.html" class="menu-item">
+                    <span class="material-icons">dashboard</span>
+                    Dashboard
+                </a>
+                <a href="admin.html" class="menu-item" onclick="showTab('mentors'); return false;">
+                    <span class="material-icons">person</span>
+                    Mentores
+                </a>
+                <a href="admin.html" class="menu-item" onclick="showTab('mentees'); return false;">
+                    <span class="material-icons">groups</span>
+                    Mentiles
+                </a>
+                <a href="admin.html" class="menu-item" onclick="showTab('sessions'); return false;">
+                    <span class="material-icons">event</span>
+                    Sesiones
+                </a>
+                <a href="admin_matchmaking.html" class="menu-item active">
+                    <span class="material-icons">handshake</span>
+                    Matchmaking
+                </a>
+                <a href="admin_statistics.html" class="menu-item">
+                    <span class="material-icons">insights</span>
+                    Estadísticas
+                </a>
+                <a href="admin_settings.html" class="menu-item">
+                    <span class="material-icons">settings</span>
+                    Configuración
+                </a>
+                <a href="#" class="menu-item" id="logoutButton">
+                    <span class="material-icons">logout</span>
+                    Cerrar sesión
+                </a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="topbar">
+                <div class="topbar-title">
+                    <h1>Matchmaking</h1>
+                </div>
+                <div class="topbar-actions">
+                    <div class="user-profile">
+                        <div class="user-avatar" id="userAvatar">A</div>
+                        <div class="user-info">
+                            <div class="user-name" id="userName">Admin</div>
+                            <div class="user-role" id="userRole">Administrador</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <div class="admin-card-title">Configuración de Matchmaking</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Peso de compatibilidad de perfil</label>
+                    <input type="range" min="0" max="100" value="70" class="form-control" id="profileWeight">
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                        <span>0%</span>
+                        <span id="profileWeightValue">70%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Peso de compatibilidad de horario</label>
+                    <input type="range" min="0" max="100" value="30" class="form-control" id="scheduleWeight">
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                        <span>0%</span>
+                        <span id="scheduleWeightValue">30%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="saveMatchmakingConfig">Guardar Configuración</button>
+            </div>
+            
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <div class="admin-card-title">Probar Matchmaking</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Seleccionar Mentil</label>
+                    <select class="form-select" id="testMentee">
+                        <option value="">Seleccionar mentil</option>
+                        <!-- Los mentiles se cargarán dinámicamente -->
+                    </select>
+                </div>
+                <button class="btn btn-primary" id="testMatchmaking">Encontrar Mentores</button>
+                
+                <div id="matchmakingResults" style="margin-top: 20px; display: none;">
+                    <h3>Resultados de Matchmaking</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Mentor</th>
+                                    <th>Compatibilidad de Perfil</th>
+                                    <th>Compatibilidad de Horario</th>
+                                    <th>Compatibilidad Total</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="matchmakingResultsTable">
+                                <!-- Los resultados se cargarán dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Verificar si el usuario está autenticado y es administrador
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        if (!token || !user || user.role !== 'admin') {
+            window.location.href = 'login.html';
+        }
+        
+        // Actualizar información del usuario
+        document.getElementById('userName').textContent = user.name || 'Admin';
+        document.getElementById('userAvatar').textContent = (user.name || 'A').charAt(0).toUpperCase();
+        
+        // Función para mostrar una pestaña específica en admin.html
+        function showTab(tabName) {
+            localStorage.setItem('adminActiveTab', tabName);
+        }
+        
+        // Cerrar sesión
+        document.getElementById('logoutButton').addEventListener('click', function() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        });
+        
+        // Actualizar valores de los sliders
+        document.getElementById('profileWeight').addEventListener('input', function() {
+            document.getElementById('profileWeightValue').textContent = this.value + '%';
+            document.getElementById('scheduleWeight').value = 100 - this.value;
+            document.getElementById('scheduleWeightValue').textContent = (100 - this.value) + '%';
+        });
+        
+        document.getElementById('scheduleWeight').addEventListener('input', function() {
+            document.getElementById('scheduleWeightValue').textContent = this.value + '%';
+            document.getElementById('profileWeight').value = 100 - this.value;
+            document.getElementById('profileWeightValue').textContent = (100 - this.value) + '%';
+        });
+        
+        // Guardar configuración de matchmaking
+        document.getElementById('saveMatchmakingConfig').addEventListener('click', function() {
+            const profileWeight = document.getElementById('profileWeight').value / 100;
+            const scheduleWeight = document.getElementById('scheduleWeight').value / 100;
+            
+            // Aquí se enviaría la configuración al backend
+            alert(`Configuración guardada: Perfil ${profileWeight}, Horario ${scheduleWeight}`);
+        });
+        
+        // Cargar mentiles para prueba de matchmaking
+        async function loadMentees() {
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/users/', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const users = await response.json();
+                    const mentees = users.filter(user => user.role === 'mentee');
+                    
+                    const menteeSelect = document.getElementById('testMentee');
+                    menteeSelect.innerHTML = '<option value="">Seleccionar mentil</option>';
+                    
+                    for (const mentee of mentees) {
+                        menteeSelect.innerHTML += `
+                            <option value="${mentee.id}">${mentee.name}</option>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Error al cargar mentiles:', error);
+            }
+        }
+        
+        // Probar matchmaking
+        document.getElementById('testMatchmaking').addEventListener('click', async function() {
+            const menteeId = document.getElementById('testMentee').value;
+            
+            if (!menteeId) {
+                alert('Por favor, seleccione un mentil');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`http://localhost:8000/api/v1/matchmaking/mentee/${menteeId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const matches = await response.json();
+                    
+                    const resultsTable = document.getElementById('matchmakingResultsTable');
+                    resultsTable.innerHTML = '';
+                    
+                    for (const match of matches) {
+                        const profilePercentage = Math.round(match.profile_compatibility * 100);
+                        const schedulePercentage = Math.round(match.schedule_compatibility * 100);
+                        const totalPercentage = Math.round(match.total_score * 100);
+                        
+                        resultsTable.innerHTML += `
+                            <tr>
+                                <td>${match.name}</td>
+                                <td>
+                                    <div style="display: flex; align-items: center;">
+                                        <div style="flex: 1; height: 8px; background-color: #eee; border-radius: 4px; overflow: hidden; margin-right: 10px;">
+                                            <div style="height: 100%; width: ${profilePercentage}%; background-color: #4caf50;"></div>
+                                        </div>
+                                        <span>${profilePercentage}%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="display: flex; align-items: center;">
+                                        <div style="flex: 1; height: 8px; background-color: #eee; border-radius: 4px; overflow: hidden; margin-right: 10px;">
+                                            <div style="height: 100%; width: ${schedulePercentage}%; background-color: #2196f3;"></div>
+                                        </div>
+                                        <span>${schedulePercentage}%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="display: flex; align-items: center;">
+                                        <div style="flex: 1; height: 8px; background-color: #eee; border-radius: 4px; overflow: hidden; margin-right: 10px;">
+                                            <div style="height: 100%; width: ${totalPercentage}%; background-color: #9c27b0;"></div>
+                                        </div>
+                                        <span>${totalPercentage}%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="createSession(${match.mentor_id}, ${menteeId})">Crear Sesión</button>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    
+                    document.getElementById('matchmakingResults').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error al probar matchmaking:', error);
+                alert('Error al probar matchmaking. Por favor, inténtelo de nuevo.');
+            }
+        });
+        
+        // Función para crear una sesión
+        window.createSession = function(mentorId, menteeId) {
+            // Redirigir a la página de sesiones con los parámetros
+            window.location.href = `admin.html?tab=sessions&mentor=${mentorId}&mentee=${menteeId}`;
+        };
+        
+        // Cargar datos al iniciar
+        window.addEventListener('DOMContentLoaded', function() {
+            loadMentees();
+        });
+    </script>
+</body>
+</html>

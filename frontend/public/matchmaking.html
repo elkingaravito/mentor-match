@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matchmaking - Mentor Match</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: #fff;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .sidebar-header .material-icons {
+            font-size: 24px;
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+        
+        .sidebar-header h1 {
+            font-size: 18px;
+            color: var(--primary-color);
+            margin: 0;
+        }
+        
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+        
+        .menu-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .menu-item:hover {
+            background-color: #f5f5f5;
+            color: var(--primary-color);
+        }
+        
+        .menu-item.active {
+            background-color: #f0f0f0;
+            color: var(--primary-color);
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .menu-item .material-icons {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .topbar-title h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+        }
+        
+        .notification-icon {
+            position: relative;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: 500;
+        }
+        
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .user-name {
+            font-weight: 500;
+        }
+        
+        .user-role {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .intro-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .intro-card h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+        
+        .intro-card p {
+            margin-bottom: 0;
+            line-height: 1.6;
+            color: #666;
+        }
+        
+        .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .match-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        
+        .match-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .match-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .match-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 24px;
+        }
+        
+        .match-info h3 {
+            margin: 0 0 5px 0;
+            font-size: 18px;
+        }
+        
+        .match-position {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .match-experience {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .match-body {
+            padding: 20px;
+        }
+        
+        .match-compatibility {
+            margin-bottom: 15px;
+        }
+        
+        .compatibility-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .compatibility-title {
+            font-weight: 500;
+        }
+        
+        .compatibility-value {
+            color: #4caf50;
+            font-weight: 500;
+        }
+        
+        .compatibility-bar {
+            height: 8px;
+            background-color: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .compatibility-fill {
+            height: 100%;
+            background-color: #4caf50;
+        }
+        
+        .compatibility-details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        
+        .compatibility-detail {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .compatibility-detail-value {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        
+        .compatibility-detail-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .match-skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .skill-tag {
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .match-actions {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .match-action-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .match-action-button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .match-action-button.secondary {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+        
+        .match-action-button.secondary:hover {
+            background-color: rgba(63, 81, 181, 0.1);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 500;
+            margin: 0;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .mobile-toggle {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <span class="material-icons">handshake</span>
+                <h1>Mentor Match</h1>
+            </div>
+            <div class="sidebar-menu">
+                <a href="dashboard.html" class="menu-item">
+                    <span class="material-icons">dashboard</span>
+                    Dashboard
+                </a>
+                <a href="mentors.html" class="menu-item">
+                    <span class="material-icons">person</span>
+                    Mentores
+                </a>
+                <a href="#" class="menu-item">
+                    <span class="material-icons">event</span>
+                    Sesiones
+                </a>
+                <a href="matchmaking.html" class="menu-item active">
+                    <span class="material-icons">handshake</span>
+                    Matchmaking
+                </a>
+                <a href="#" class="menu-item">
+                    <span class="material-icons">calendar_today</span>
+                    Calendario
+                </a>
+                <a href="#" class="menu-item">
+                    <span class="material-icons">insights</span>
+                    Estadísticas
+                </a>
+                <a href="#" class="menu-item">
+                    <span class="material-icons">settings</span>
+                    Configuración
+                </a>
+                <a href="#" class="menu-item" id="logoutButton">
+                    <span class="material-icons">logout</span>
+                    Cerrar sesión
+                </a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="topbar">
+                <div class="topbar-title">
+                    <h1 id="pageTitle">Matchmaking</h1>
+                </div>
+                <div class="topbar-actions">
+                    <div class="notification-icon">
+                        <span class="material-icons">notifications</span>
+                        <span class="notification-badge" id="notificationBadge">0</span>
+                    </div>
+                    <div class="user-profile">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <div class="user-info">
+                            <div class="user-name" id="userName">Usuario</div>
+                            <div class="user-role" id="userRole">Rol</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="intro-card">
+                <h2 id="introTitle">Encuentra tu match perfecto</h2>
+                <p id="introText">Basado en tus intereses y disponibilidad, te recomendamos estos mentores que podrían ayudarte a alcanzar tus objetivos profesionales.</p>
+            </div>
+            
+            <div class="matches-grid" id="matchesGrid">
+                <!-- Los matches se cargarán dinámicamente -->
+                <div class="match-card">
+                    <div class="match-header">
+                        <div class="match-avatar">?</div>
+                        <div class="match-info">
+                            <h3>Cargando recomendaciones...</h3>
+                            <div class="match-position"></div>
+                            <div class="match-experience"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para solicitar sesión -->
+    <div class="modal" id="sessionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Solicitar Sesión</h2>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="sessionDate">Fecha y hora</label>
+                    <input type="datetime-local" id="sessionDate" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="sessionDuration">Duración</label>
+                    <select id="sessionDuration" class="form-control">
+                        <option value="60">1 hora</option>
+                        <option value="90">1 hora 30 minutos</option>
+                        <option value="120">2 horas</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sessionTopic">Tema de la sesión</label>
+                    <textarea id="sessionTopic" class="form-control" rows="3" placeholder="Describe brevemente el tema que te gustaría tratar en la sesión..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="match-action-button secondary" id="cancelSession">Cancelar</button>
+                <button class="match-action-button" id="confirmSession">Solicitar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Verificar si el usuario está autenticado
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        if (!token || !user) {
+            window.location.href = 'login.html';
+        }
+        
+        // Actualizar información del usuario
+        document.getElementById('userName').textContent = user.name || 'Usuario';
+        document.getElementById('userRole').textContent = user.role === 'mentor' ? 'Mentor' : 'Mentil';
+        document.getElementById('userAvatar').textContent = (user.name || 'U').charAt(0).toUpperCase();
+        
+        // Actualizar texto según el rol
+        if (user.role === 'mentor') {
+            document.getElementById('pageTitle').textContent = 'Mentiles Recomendados';
+            document.getElementById('introTitle').textContent = 'Mentiles que podrían beneficiarse de tu experiencia';
+            document.getElementById('introText').textContent = 'Basado en tus habilidades y disponibilidad, te recomendamos estos mentiles que podrían beneficiarse de tu experiencia y conocimientos.';
+        } else {
+            document.getElementById('pageTitle').textContent = 'Mentores Recomendados';
+            document.getElementById('introTitle').textContent = 'Encuentra tu mentor ideal';
+            document.getElementById('introText').textContent = 'Basado en tus intereses y disponibilidad, te recomendamos estos mentores que podrían ayudarte a alcanzar tus objetivos profesionales.';
+        }
+        
+        // Cerrar sesión
+        document.getElementById('logoutButton').addEventListener('click', function() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        });
+        
+        // Variables globales
+        let matches = [];
+        let selectedMatch = null;
+        
+        // Cargar matches
+        async function loadMatches() {
+            try {
+                const endpoint = user.role === 'mentor' 
+                    ? `http://localhost:8000/api/v1/matchmaking/mentor/${user.id}`
+                    : `http://localhost:8000/api/v1/matchmaking/mentee/${user.id}`;
+                
+                const response = await fetch(endpoint, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    matches = await response.json();
+                    renderMatches();
+                }
+            } catch (error) {
+                console.error('Error al cargar matches:', error);
+            }
+        }
+        
+        // Renderizar matches
+        function renderMatches() {
+            const matchesGrid = document.getElementById('matchesGrid');
+            matchesGrid.innerHTML = '';
+            
+            if (matches.length === 0) {
+                matchesGrid.innerHTML = `
+                    <div class="match-card">
+                        <div class="match-header">
+                            <div class="match-info">
+                                <h3>No se encontraron recomendaciones</h3>
+                                <div class="match-position">Intenta actualizar tu perfil con más información</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            matches.forEach(match => {
+                const matchCard = document.createElement('div');
+                matchCard.className = 'match-card';
+                
+                const compatibilityPercentage = Math.round(match.total_score * 100);
+                const profileCompatibilityPercentage = Math.round(match.profile_compatibility * 100);
+                const scheduleCompatibilityPercentage = Math.round(match.schedule_compatibility * 100);
+                
+                const position = user.role === 'mentor' 
+                    ? match.current_position
+                    : `${match.position} en ${match.company}`;
+                
+                const experience = user.role === 'mentor'
+                    ? ''
+                    : `<div class="match-experience">${match.experience_years} años de experiencia</div>`;
+                
+                matchCard.innerHTML = `
+                    <div class="match-header">
+                        <div class="match-avatar">${match.name.charAt(0).toUpperCase()}</div>
+                        <div class="match-info">
+                            <h3>${match.name}</h3>
+                            <div class="match-position">${position}</div>
+                            ${experience}
+                        </div>
+                    </div>
+                    <div class="match-body">
+                        <div class="match-compatibility">
+                            <div class="compatibility-label">
+                                <div class="compatibility-title">Compatibilidad</div>
+                                <div class="compatibility-value">${compatibilityPercentage}%</div>
+                            </div>
+                            <div class="compatibility-bar">
+                                <div class="compatibility-fill" style="width: ${compatibilityPercentage}%;"></div>
+                            </div>
+                            <div class="compatibility-details">
+                                <div class="compatibility-detail">
+                                    <div class="compatibility-detail-value">${profileCompatibilityPercentage}%</div>
+                                    <div class="compatibility-detail-label">Perfil</div>
+                                </div>
+                                <div class="compatibility-detail">
+                                    <div class="compatibility-detail-value">${scheduleCompatibilityPercentage}%</div>
+                                    <div class="compatibility-detail-label">Horario</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="match-actions">
+                        <button class="match-action-button secondary view-profile" data-id="${match.mentor_id || match.mentee_id}">Ver perfil</button>
+                        <button class="match-action-button request-session" data-id="${match.mentor_id || match.mentee_id}">Solicitar sesión</button>
+                    </div>
+                `;
+                
+                matchesGrid.appendChild(matchCard);
+            });
+            
+            // Agregar event listeners a los botones
+            document.querySelectorAll('.request-session').forEach(button => {
+                button.addEventListener('click', function() {
+                    const matchId = parseInt(this.getAttribute('data-id'));
+                    selectedMatch = matches.find(m => (m.mentor_id === matchId || m.mentee_id === matchId));
+                    openSessionModal();
+                });
+            });
+        }
+        
+        // Abrir modal de solicitud de sesión
+        function openSessionModal() {
+            document.getElementById('sessionModal').classList.add('active');
+            
+            // Establecer fecha mínima (hoy)
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const minDate = `${year}-${month}-${day}T00:00`;
+            
+            document.getElementById('sessionDate').setAttribute('min', minDate);
+            
+            // Establecer fecha por defecto (mañana a las 10:00)
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(10, 0, 0, 0);
+            
+            const tomorrowYear = tomorrow.getFullYear();
+            const tomorrowMonth = String(tomorrow.getMonth() + 1).padStart(2, '0');
+            const tomorrowDay = String(tomorrow.getDate()).padStart(2, '0');
+            const tomorrowHour = String(tomorrow.getHours()).padStart(2, '0');
+            const tomorrowMinute = String(tomorrow.getMinutes()).padStart(2, '0');
+            
+            const defaultDate = `${tomorrowYear}-${tomorrowMonth}-${tomorrowDay}T${tomorrowHour}:${tomorrowMinute}`;
+            document.getElementById('sessionDate').value = defaultDate;
+        }
+        
+        // Cerrar modal de solicitud de sesión
+        function closeSessionModal() {
+            document.getElementById('sessionModal').classList.remove('active');
+        }
+        
+        // Solicitar sesión
+        async function requestSession() {
+            const sessionDate = document.getElementById('sessionDate').value;
+            const sessionDuration = parseInt(document.getElementById('sessionDuration').value);
+            
+            if (!sessionDate) {
+                alert('Por favor, selecciona una fecha y hora para la sesión.');
+                return;
+            }
+            
+            const startTime = new Date(sessionDate);
+            const endTime = new Date(startTime.getTime() + sessionDuration * 60000);
+            
+            try {
+                const mentorId = user.role === 'mentor' ? user.id : selectedMatch.mentor_id;
+                const menteeId = user.role === 'mentee' ? user.id : selectedMatch.mentee_id;
+                
+                const response = await fetch('http://localhost:8000/api/v1/sessions/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        mentor_id: mentorId,
+                        mentee_id: menteeId,
+                        start_time: startTime.toISOString(),
+                        end_time: endTime.toISOString()
+                    })
+                });
+                
+                if (response.ok) {
+                    const session = await response.json();
+                    closeSessionModal();
+                    alert('Sesión solicitada con éxito. ' + (user.role === 'mentee' ? 'El mentor' : 'El mentil') + ' recibirá una notificación.');
+                    
+                    // Redirigir a la página de sesiones
+                    window.location.href = 'sessions.html';
+                } else {
+                    const error = await response.json();
+                    alert(`Error al solicitar la sesión: ${error.detail || 'Error desconocido'}`);
+                }
+            } catch (error) {
+                console.error('Error al solicitar sesión:', error);
+                alert('Error al solicitar la sesión. Por favor, inténtalo de nuevo más tarde.');
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('closeModal').addEventListener('click', closeSessionModal);
+        document.getElementById('cancelSession').addEventListener('click', closeSessionModal);
+        document.getElementById('confirmSession').addEventListener('click', requestSession);
+        
+        // Cargar datos al iniciar
+        window.addEventListener('DOMContentLoaded', function() {
+            loadMatches();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+# Directorios generales
+node_modules/          
+.env                   
+.vscode/               
+.idea/                 
+dist/                  
+build/                 
+
+# Entornos virtuales Python
+.venv/
+**/.venv/
+backend/.venv/
+backend/**/.venv/
+*.pyc
+__pycache__/
+
+# Backend (Python/FastAPI)
+.venv/                 
+__pycache__/           
+*.py[cod]              
+*.sqlite3              
+*.db                   
+logs/                  
+backend/.env           
+backend/instance/      
+
+# Frontend (React/TypeScript)
+frontend/.env          
+frontend/public/*.json 
+frontend/src/**/*.js   
+frontend/src/**/*.map  
+
+# Documentación
+docs/*.pdf             
+docs/*.docx            
+docs/output/           
+
+# Herramientas de desarrollo
+.DS_Store              
+Thumbs.db              
+*.log                  
+*.tmp                  
+*.swp                  
+
+# Pruebas y cobertura
+.coverage              
+coverage.xml           
+htmlcov/               
+pytest_cache/          
+
+# Archivos sensibles
+*.key                  
+*.crt                  
+*.pem                  

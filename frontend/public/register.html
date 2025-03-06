@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Mentor Match</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .auth-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .auth-image {
+            flex: 1;
+            background-image: url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            position: relative;
+        }
+        
+        .auth-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .auth-image-content {
+            position: relative;
+            color: white;
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        .auth-image-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        
+        .auth-form {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px;
+            background-color: white;
+            overflow-y: auto;
+        }
+        
+        .auth-form-container {
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .auth-logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        
+        .auth-logo .material-icons {
+            font-size: 36px;
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+        
+        .auth-logo h1 {
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
+        }
+        
+        .form-footer {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .form-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            color: var(--secondary-color);
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .steps {
+            display: flex;
+            margin-bottom: 30px;
+        }
+        
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            position: relative;
+        }
+        
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #ddd;
+            transform: translateY(-50%);
+            z-index: -1;
+        }
+        
+        .step-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            background-color: #ddd;
+            color: #666;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .step.active .step-number {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .step.completed .step-number {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .step.active .step-label {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .form-step {
+            display: none;
+        }
+        
+        .form-step.active {
+            display: block;
+        }
+        
+        .form-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .auth-container {
+                flex-direction: column;
+            }
+            
+            .auth-image {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-image">
+            <div class="auth-image-content">
+                <h2>Únete a Mentor Match</h2>
+                <p>Conecta con mentores y mentiles para impulsar tu crecimiento profesional.</p>
+            </div>
+        </div>
+        <div class="auth-form">
+            <div class="auth-form-container">
+                <div class="auth-logo">
+                    <span class="material-icons">handshake</span>
+                    <h1>Mentor Match</h1>
+                </div>
+                
+                <h2>Crear una cuenta</h2>
+                <p style="margin-bottom: 30px; color: var(--text-light);">Completa el formulario para unirte a nuestra comunidad</p>
+                
+                <div class="steps">
+                    <div class="step active" id="step1">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Información básica</div>
+                    </div>
+                    <div class="step" id="step2">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Perfil</div>
+                    </div>
+                </div>
+                
+                <form id="registerForm">
+                    <div class="form-step active" id="step1-content">
+                        <div class="form-group">
+                            <label for="name">Nombre completo</label>
+                            <input type="text" id="name" class="form-control" placeholder="Tu nombre completo" required>
+                            <div id="nameError" class="error-message"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Correo electrónico</label>
+                            <input type="email" id="email" class="form-control" placeholder="tu@email.com" required>
+                            <div id="emailError" class="error-message"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="password">Contraseña</label>
+                            <input type="password" id="password" class="form-control" placeholder="Mínimo 8 caracteres" required>
+                            <div id="passwordError" class="error-message"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirmar contraseña</label>
+                            <input type="password" id="confirmPassword" class="form-control" placeholder="Confirma tu contraseña" required>
+                            <div id="confirmPasswordError" class="error-message"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Tipo de usuario</label>
+                            <div style="display: flex; gap: 20px;">
+                                <label style="display: flex; align-items: center;">
+                                    <input type="radio" name="role" value="mentee" checked style="margin-right: 8px;"> Mentil (busco mentoría)
+                                </label>
+                                <label style="display: flex; align-items: center;">
+                                    <input type="radio" name="role" value="mentor" style="margin-right: 8px;"> Mentor (ofrezco mentoría)
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <div></div>
+                            <button type="button" id="nextButton" class="btn btn-primary">Continuar</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-step" id="step2-content">
+                        <!-- Campos para Mentor -->
+                        <div id="mentorFields" style="display: none;">
+                            <div class="form-group">
+                                <label for="bio">Biografía</label>
+                                <textarea id="bio" class="form-control" rows="4" placeholder="Cuéntanos sobre tu experiencia profesional"></textarea>
+                                <div id="bioError" class="error-message"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="experience_years">Años de experiencia</label>
+                                <input type="number" id="experience_years" class="form-control" min="0">
+                                <div id="experienceYearsError" class="error-message"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="company">Empresa</label>
+                                <input type="text" id="company" class="form-control" placeholder="Nombre de tu empresa actual">
+                                <div id="companyError" class="error-message"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="position">Cargo</label>
+                                <input type="text" id="position" class="form-control" placeholder="Tu posición actual">
+                                <div id="positionError" class="error-message"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="linkedin_url">URL de LinkedIn (opcional)</label>
+                                <input type="url" id="linkedin_url" class="form-control" placeholder="https://linkedin.com/in/tuusuario">
+                            </div>
+                        </div>
+                        
+                        <!-- Campos para Mentee -->
+                        <div id="menteeFields">
+                            <div class="form-group">
+                                <label for="mentee_bio">Biografía</label>
+                                <textarea id="mentee_bio" class="form-control" rows="4" placeholder="Cuéntanos un poco sobre ti"></textarea>
+                                <div id="menteeBioError" class="error-message"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="goals">Objetivos de mentoría</label>
+                                <textarea id="goals" class="form-control" rows="4" placeholder="¿Qué te gustaría lograr con la mentoría?"></textarea>
+                                <div id="goalsError" class="error-message"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="current_position">Posición actual</label>
+                                <input type="text" id="current_position" class="form-control" placeholder="Estudiante, Desarrollador Junior, etc.">
+                                <div id="currentPositionError" class="error-message"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="mentee_linkedin_url">URL de LinkedIn (opcional)</label>
+                                <input type="url" id="mentee_linkedin_url" class="form-control" placeholder="https://linkedin.com/in/tuusuario">
+                            </div>
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="button" id="backButton" class="btn btn-outline">Atrás</button>
+                            <button type="submit" class="btn btn-primary">Registrarse</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-footer">
+                        ¿Ya tienes una cuenta? <a href="login.html">Inicia sesión</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Obtener parámetros de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const roleParam = urlParams.get('role');
+        
+        // Si hay un parámetro de rol, seleccionar el radio button correspondiente
+        if (roleParam === 'mentor' || roleParam === 'mentee') {
+            document.querySelector(`input[name="role"][value="${roleParam}"]`).checked = true;
+        }
+        
+        // Mostrar/ocultar campos según el rol seleccionado
+        function updateFieldsVisibility() {
+            const role = document.querySelector('input[name="role"]:checked').value;
+            
+            if (role === 'mentor') {
+                document.getElementById('mentorFields').style.display = 'block';
+                document.getElementById('menteeFields').style.display = 'none';
+            } else {
+                document.getElementById('mentorFields').style.display = 'none';
+                document.getElementById('menteeFields').style.display = 'block';
+            }
+        }
+        
+        // Actualizar campos al cargar la página
+        updateFieldsVisibility();
+        
+        // Actualizar campos cuando cambia el rol
+        document.querySelectorAll('input[name="role"]').forEach(radio => {
+            radio.addEventListener('change', updateFieldsVisibility);
+        });
+        
+        // Navegación entre pasos
+        document.getElementById('nextButton').addEventListener('click', function() {
+            // Validar campos del paso 1
+            let isValid = true;
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // Limpiar mensajes de error
+            document.getElementById('nameError').textContent = '';
+            document.getElementById('emailError').textContent = '';
+            document.getElementById('passwordError').textContent = '';
+            document.getElementById('confirmPasswordError').textContent = '';
+            
+            if (!name) {
+                document.getElementById('nameError').textContent = 'El nombre es requerido';
+                isValid = false;
+            }
+            
+            if (!email) {
+                document.getElementById('emailError').textContent = 'El correo electrónico es requerido';
+                isValid = false;
+            } else if (!/\S+@\S+\.\S+/.test(email)) {
+                document.getElementById('emailError').textContent = 'Ingresa un correo electrónico válido';
+                isValid = false;
+            }
+            
+            if (!password) {
+                document.getElementById('passwordError').textContent = 'La contraseña es requerida';
+                isValid = false;
+            } else if (password.length < 8) {
+                document.getElementById('passwordError').textContent = 'La contraseña debe tener al menos 8 caracteres';
+                isValid = false;
+            }
+            
+            if (password !== confirmPassword) {
+                document.getElementById('confirmPasswordError').textContent = 'Las contraseñas no coinciden';
+                isValid = false;
+            }
+            
+            if (isValid) {
+                // Avanzar al paso 2
+                document.getElementById('step1').classList.remove('active');
+                document.getElementById('step1').classList.add('completed');
+                document.getElementById('step2').classList.add('active');
+                
+                document.getElementById('step1-content').classList.remove('active');
+                document.getElementById('step2-content').classList.add('active');
+            }
+        });
+        
+        document.getElementById('backButton').addEventListener('click', function() {
+            // Volver al paso 1
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step1').classList.remove('completed');
+            document.getElementById('step1').classList.add('active');
+            
+            document.getElementById('step2-content').classList.remove('active');
+            document.getElementById('step1-content').classList.add('active');
+        });
+        
+        // Envío del formulario
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const role = document.querySelector('input[name="role"]:checked').value;
+            
+            // Validar campos del paso 2
+            let isValid = true;
+            
+            if (role === 'mentor') {
+                const bio = document.getElementById('bio').value;
+                const experienceYears = document.getElementById('experience_years').value;
+                const company = document.getElementById('company').value;
+                const position = document.getElementById('position').value;
+                
+                // Limpiar mensajes de error
+                document.getElementById('bioError').textContent = '';
+                document.getElementById('experienceYearsError').textContent = '';
+                document.getElementById('companyError').textContent = '';
+                document.getElementById('positionError').textContent = '';
+                
+                if (!bio) {
+                    document.getElementById('bioError').textContent = 'La biografía es requerida';
+                    isValid = false;
+                }
+                
+                if (!experienceYears) {
+                    document.getElementById('experienceYearsError').textContent = 'Los años de experiencia son requeridos';
+                    isValid = false;
+                }
+                
+                if (!company) {
+                    document.getElementById('companyError').textContent = 'La empresa es requerida';
+                    isValid = false;
+                }
+                
+                if (!position) {
+                    document.getElementById('positionError').textContent = 'El cargo es requerido';
+                    isValid = false;
+                }
+            } else {
+                const bio = document.getElementById('mentee_bio').value;
+                const goals = document.getElementById('goals').value;
+                const currentPosition = document.getElementById('current_position').value;
+                
+                // Limpiar mensajes de error
+                document.getElementById('menteeBioError').textContent = '';
+                document.getElementById('goalsError').textContent = '';
+                document.getElementById('currentPositionError').textContent = '';
+                
+                if (!bio) {
+                    document.getElementById('menteeBioError').textContent = 'La biografía es requerida';
+                    isValid = false;
+                }
+                
+                if (!goals) {
+                    document.getElementById('goalsError').textContent = 'Los objetivos son requeridos';
+                    isValid = false;
+                }
+                
+                if (!currentPosition) {
+                    document.getElementById('currentPositionError').textContent = 'La posición actual es requerida';
+                    isValid = false;
+                }
+            }
+            
+            if (isValid) {
+                try {
+                    // Registrar usuario
+                    const registerResponse = await fetch('http://localhost:8000/api/v1/auth/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            name: document.getElementById('name').value,
+                            email: document.getElementById('email').value,
+                            password: document.getElementById('password').value,
+                            role: role
+                        })
+                    });
+                    
+                    const userData = await registerResponse.json();
+                    
+                    if (registerResponse.ok) {
+                        // Iniciar sesión
+                        const loginResponse = await fetch('http://localhost:8000/api/v1/auth/login', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: `username=${encodeURIComponent(document.getElementById('email').value)}&password=${encodeURIComponent(document.getElementById('password').value)}`
+                        });
+                        
+                        const loginData = await loginResponse.json();
+                        
+                        if (loginResponse.ok) {
+                            // Guardar el token
+                            localStorage.setItem('token', loginData.access_token);
+                            localStorage.setItem('user', JSON.stringify(userData));
+                            
+                            // Crear perfil según el rol
+                            if (role === 'mentor') {
+                                await fetch(`http://localhost:8000/api/v1/users/me/mentor`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${loginData.access_token}`
+                                    },
+                                    body: JSON.stringify({
+                                        bio: document.getElementById('bio').value,
+                                        experience_years: parseInt(document.getElementById('experience_years').value),
+                                        company: document.getElementById('company').value,
+                                        position: document.getElementById('position').value,
+                                        linkedin_url: document.getElementById('linkedin_url').value
+                                    })
+                                });
+                            } else {
+                                await fetch(`http://localhost:8000/api/v1/users/me/mentee`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${loginData.access_token}`
+                                    },
+                                    body: JSON.stringify({
+                                        bio: document.getElementById('mentee_bio').value,
+                                        goals: document.getElementById('goals').value,
+                                        current_position: document.getElementById('current_position').value,
+                                        linkedin_url: document.getElementById('mentee_linkedin_url').value
+                                    })
+                                });
+                            }
+                            
+                            // Redirigir al dashboard
+                            window.location.href = 'dashboard.html';
+                        }
+                    } else {
+                        if (userData.detail) {
+                            if (userData.detail.includes('email')) {
+                                document.getElementById('emailError').textContent = userData.detail;
+                            } else {
+                                alert(userData.detail);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al registrar usuario. Por favor, inténtalo de nuevo más tarde.');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

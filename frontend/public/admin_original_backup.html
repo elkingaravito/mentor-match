@@ -1,0 +1,2140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Mentor Match</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: #fff;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .sidebar-header .material-icons {
+            font-size: 24px;
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+        
+        .sidebar-header h1 {
+            font-size: 18px;
+            color: var(--primary-color);
+            margin: 0;
+        }
+        
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+        
+        .menu-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .menu-item:hover {
+            background-color: #f5f5f5;
+            color: var(--primary-color);
+        }
+        
+        .menu-item.active {
+            background-color: #f0f0f0;
+            color: var(--primary-color);
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .menu-item .material-icons {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .topbar-title h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: 500;
+        }
+        
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .user-name {
+            font-weight: 500;
+        }
+        
+        .user-role {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .admin-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .admin-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .admin-card-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .admin-card-action {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .search-bar {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 14px;
+        }
+        
+        .search-button {
+            padding: 10px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background-color: #f8f8f8;
+            font-weight: 500;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: #e6f7e6;
+            color: #2e7d32;
+        }
+        
+        .status-inactive {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .action-button {
+            padding: 5px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .action-button:hover {
+            color: var(--primary-color);
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <span class="material-icons">handshake</span>
+                <h1>Mentor Match</h1>
+            </div>
+            <div class="sidebar-menu">
+                <a href="admin.html" class="menu-item active">
+                    <span class="material-icons">dashboard</span>
+                    Dashboard
+                </a>
+                <a href="#" class="menu-item" id="mentorsTab">
+                    <span class="material-icons">person</span>
+                    Mentores
+                </a>
+                <a href="#" class="menu-item" id="menteesTab">
+                    <span class="material-icons">groups</span>
+                    Mentiles
+                </a>
+                <a href="#" class="menu-item" id="sessionsTab">
+                    <span class="material-icons">event</span>
+                    Sesiones
+                </a>
+                <a href="admin_matchmaking.html" class="menu-item" id="matchmakingTab">
+                    <span class="material-icons">handshake</span>
+                    Matchmaking
+                </a>
+                <a href="admin_statistics.html" class="menu-item" id="statisticsTab">
+                    <span class="material-icons">insights</span>
+                    Estadísticas
+                </a>
+                <a href="admin_settings.html" class="menu-item" id="settingsTab">
+                    <span class="material-icons">settings</span>
+                    Configuración
+                </a>
+                <a href="#" class="menu-item" id="logoutButton">
+                    <span class="material-icons">logout</span>
+                    Cerrar sesión
+                </a>
+            </div>        
+        <div class="main-content">
+            <div class="topbar">
+                <div class="topbar-title">
+                    <h1>Panel de Administración</h1>
+                </div>
+                <div class="topbar-actions">
+                    <div class="user-profile">
+                        <div class="user-avatar" id="userAvatar">A</div>
+                        <div class="user-info">
+                            <div class="user-name" id="userName">Admin</div>
+                            <div class="user-role" id="userRole">Administrador</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="dashboard">Dashboard</div>
+                <div class="tab" data-tab="mentors">Mentores</div>
+                <div class="tab" data-tab="mentees">Mentiles</div>
+                <div class="tab" data-tab="sessions">Sesiones</div>
+            </div>
+            
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="dashboard-tab">
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <div class="admin-card-title">Resumen del Sistema</div>
+                    </div>
+                    <div class="dashboard-stats" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
+                        <div class="stat-card" style="background-color: #e3f2fd; padding: 20px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 36px; font-weight: 500; color: #1976d2;" id="totalMentors">0</div>
+                            <div style="font-size: 14px; color: #666;">Mentores</div>
+                        </div>
+                        <div class="stat-card" style="background-color: #e8f5e9; padding: 20px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 36px; font-weight: 500; color: #388e3c;" id="totalMentees">0</div>
+                            <div style="font-size: 14px; color: #666;">Mentiles</div>
+                        </div>
+                        <div class="stat-card" style="background-color: #fff8e1; padding: 20px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 36px; font-weight: 500; color: #ffa000;" id="totalSessions">0</div>
+                            <div style="font-size: 14px; color: #666;">Sesiones</div>
+                        </div>
+                        <div class="stat-card" style="background-color: #fce4ec; padding: 20px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 36px; font-weight: 500; color: #d81b60;" id="totalHours">0</div>
+                            <div style="font-size: 14px; color: #666;">Horas de Mentoría</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <div class="admin-card-title">Sesiones Recientes</div>
+                        <div class="admin-card-action">
+                            <button class="btn btn-primary" id="viewAllSessionsBtn">Ver Todas</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Mentor</th>
+                                    <th>Mentil</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentSessionsTable">
+                                <tr>
+                                    <td colspan="6" style="text-align: center;">Cargando sesiones...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <div class="admin-card-title">Nuevos Usuarios</div>
+                        <div class="admin-card-action">
+                            <button class="btn btn-primary" id="addUserBtn">Añadir Usuario</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>Rol</th>
+                                    <th>Fecha de Registro</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentUsersTable">
+                                <tr>
+                                    <td colspan="6" style="text-align: center;">Cargando usuarios...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mentors Tab -->
+            <div class="tab-content" id="mentors-tab">
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <div class="admin-card-title">Gestión de Mentores</div>
+                        <div class="admin-card-action">
+                            <button class="btn btn-primary" id="addMentorBtn">Añadir Mentor</button>
+                        </div>
+                    </div>
+                    <div class="search-bar">
+                        <input type="text" class="search-input" id="mentorSearchInput" placeholder="Buscar por nombre, email o habilidades...">
+                        <button class="search-button" id="mentorSearchBtn">
+                            <span class="material-icons">search</span>
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>Posición</th>
+                                    <th>Empresa</th>
+                                    <th>Experiencia</th>
+                                    <th>Habilidades</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mentorsTable">
+                                <tr>
+                                    <td colspan="9" style="text-align: center;">Cargando mentores...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mentees Tab -->
+            <div class="tab-content" id="mentees-tab">
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <div class="admin-card-title">Gestión de Mentiles</div>
+                        <div class="admin-card-action">
+                            <button class="btn btn-primary" id="addMenteeBtn">Añadir Mentil</button>
+                        </div>
+                    </div>
+                    <div class="search-bar">
+                        <input type="text" class="search-input" id="menteeSearchInput" placeholder="Buscar por nombre, email o intereses...">
+                        <button class="search-button" id="menteeSearchBtn">
+                            <span class="material-icons">search</span>
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>Posición Actual</th>
+                                    <th>Objetivos</th>
+                                    <th>Intereses</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="menteesTable">
+                                <tr>
+                                    <td colspan="8" style="text-align: center;">Cargando mentiles...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sessions Tab -->
+            <div class="tab-content" id="sessions-tab">
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <div class="admin-card-title">Gestión de Sesiones</div>
+                        <div class="admin-card-action">
+                            <button class="btn btn-primary" id="createSessionBtn">Crear Sesión</button>
+                        </div>
+                    </div>
+                    <div class="search-bar">
+                        <input type="text" class="search-input" id="sessionSearchInput" placeholder="Buscar por mentor, mentil o fecha...">
+                        <button class="search-button" id="sessionSearchBtn">
+                            <span class="material-icons">search</span>
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Mentor</th>
+                                    <th>Mentil</th>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>Duración</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sessionsTable">
+                                <tr>
+                                    <td colspan="8" style="text-align: center;">Cargando sesiones...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para añadir/editar usuario -->
+    <div class="modal" id="userModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="userModalTitle">Añadir Usuario</h2>
+                <button class="modal-close" id="closeUserModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <input type="hidden" id="userId">
+                    <div class="form-group">
+                        <label for="userName" class="form-label">Nombre</label>
+                        <input type="text" id="userNameInput" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userEmail" class="form-label">Email</label>
+                        <input type="email" id="userEmail" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userPassword" class="form-label">Contraseña</label>
+                        <input type="password" id="userPassword" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userRole" class="form-label">Rol</label>
+                        <select id="userRoleSelect" class="form-select" required>
+                            <option value="">Seleccionar rol</option>
+                            <option value="mentor">Mentor</option>
+                            <option value="mentee">Mentil</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Campos específicos para mentor -->
+                    <div id="mentorFields" style="display: none;">
+                        <div class="form-group">
+                            <label for="mentorBio" class="form-label">Biografía</label>
+                            <textarea id="mentorBio" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="mentorExperience" class="form-label">Años de Experiencia</label>
+                            <input type="number" id="mentorExperience" class="form-control" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="mentorCompany" class="form-label">Empresa</label>
+                            <input type="text" id="mentorCompany" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="mentorPosition" class="form-label">Posición</label>
+                            <input type="text" id="mentorPosition" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="mentorLinkedin" class="form-label">LinkedIn URL</label>
+                            <input type="url" id="mentorLinkedin" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Habilidades</label>
+                            <div id="mentorSkillsContainer">
+                                <!-- Las habilidades se cargarán dinámicamente -->
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="addSkillBtn">Añadir Habilidad</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Campos específicos para mentil -->
+                    <div id="menteeFields" style="display: none;">
+                        <div class="form-group">
+                            <label for="menteeBio" class="form-label">Biografía</label>
+                            <textarea id="menteeBio" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="menteeGoals" class="form-label">Objetivos</label>
+                            <textarea id="menteeGoals" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="menteePosition" class="form-label">Posición Actual</label>
+                            <input type="text" id="menteePosition" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="menteeLinkedin" class="form-label">LinkedIn URL</label>
+                            <input type="url" id="menteeLinkedin" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Intereses</label>
+                            <div id="menteeInterestsContainer">
+                                <!-- Los intereses se cargarán dinámicamente -->
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="addInterestBtn">Añadir Interés</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelUserBtn">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveUserBtn">Guardar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para crear/editar sesión -->
+    <div class="modal" id="sessionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="sessionModalTitle">Crear Sesión</h2>
+                <button class="modal-close" id="closeSessionModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="sessionForm">
+                    <input type="hidden" id="sessionId">
+                    <div class="form-group">
+                        <label for="sessionMentor" class="form-label">Mentor</label>
+                        <select id="sessionMentor" class="form-select" required>
+                            <option value="">Seleccionar mentor</option>
+                            <!-- Los mentores se cargarán dinámicamente -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sessionMentee" class="form-label">Mentil</label>
+                        <select id="sessionMentee" class="form-select" required>
+                            <option value="">Seleccionar mentil</option>
+                            <!-- Los mentiles se cargarán dinámicamente -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sessionDate" class="form-label">Fecha</label>
+                        <input type="date" id="sessionDate" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sessionTime" class="form-label">Hora</label>
+                        <input type="time" id="sessionTime" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sessionDuration" class="form-label">Duración (minutos)</label>
+                        <input type="number" id="sessionDuration" class="form-control" min="15" step="15" value="60" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sessionStatus" class="form-label">Estado</label>
+                        <select id="sessionStatus" class="form-select" required>
+                            <option value="scheduled">Programada</option>
+                            <option value="completed">Completada</option>
+                            <option value="cancelled">Cancelada</option>
+                            <option value="no-show">No asistió</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sessionNotes" class="form-label">Notas</label>
+                        <textarea id="sessionNotes" class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelSessionBtn">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveSessionBtn">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Verificar si el usuario está autenticado y es administrador
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        if (!token || !user || user.role !== 'admin') {
+            window.location.href = 'login.html';
+        }
+        
+        // Actualizar información del usuario
+        document.getElementById('userName').textContent = user.name || 'Admin';
+        document.getElementById('userAvatar').textContent = (user.name || 'A').charAt(0).toUpperCase();
+        
+        // Manejo de pestañas
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                // Desactivar todas las pestañas y contenidos
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Activar la pestaña y contenido seleccionados
+                tab.classList.add('active');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+        
+        // Manejo de enlaces del menú lateral
+        document.getElementById('mentorsTab').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.tab[data-tab="mentors"]').click();
+        });
+        
+        document.getElementById('menteesTab').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.tab[data-tab="mentees"]').click();
+        });
+        
+        document.getElementById('sessionsTab').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.tab[data-tab="sessions"]').click();
+        });
+        
+        document.getElementById('matchmakingTab').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = 'admin_matchmaking.html';
+        });        
+        document.getElementById('statisticsTab').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = 'admin_statistics.html';
+        });        
+        document.getElementById('settingsTab').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = 'admin_settings.html';
+        });        
+        document.getElementById('logoutButton').addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        });        document.getElementById('sessionsTab').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.tab[data-tab="sessions"]').click();
+        });
+        
+        document.getElementById('settingsTab').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = 'admin_settings.html';
+        });
+        document.getElementById('statisticsTab').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = 'admin_statistics.html';
+        });        
+        document.getElementById('logoutButton').addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        });
+        
+        // Manejo de modales
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        // Modal de usuario
+        document.getElementById('addUserBtn').addEventListener('click', function() {
+            document.getElementById('userModalTitle').textContent = 'Añadir Usuario';
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            openModal('userModal');
+        });
+        
+        document.getElementById('closeUserModal').addEventListener('click', function() {
+            closeModal('userModal');
+        });
+        
+        document.getElementById('cancelUserBtn').addEventListener('click', function() {
+            closeModal('userModal');
+        });
+        
+        // Modal de sesión
+        document.getElementById('createSessionBtn').addEventListener('click', function() {
+            document.getElementById('sessionModalTitle').textContent = 'Crear Sesión';
+            document.getElementById('sessionForm').reset();
+            document.getElementById('sessionId').value = '';
+            loadMentorsAndMentees();
+            openModal('sessionModal');
+            
+            // Eliminar advertencia si existe
+            const existingWarning = document.getElementById('calendarIntegrationWarning');
+            if (existingWarning) {
+                existingWarning.remove();
+            }
+        });
+        
+        document.getElementById('closeSessionModal').addEventListener('click', function() {
+            closeModal('sessionModal');
+        });
+        
+        document.getElementById('cancelSessionBtn').addEventListener('click', function() {
+            closeModal('sessionModal');
+        });
+        
+        // Mostrar/ocultar campos según el rol seleccionado
+        document.getElementById('userRoleSelect').addEventListener('change', function() {
+            const role = this.value;
+            
+            document.getElementById('mentorFields').style.display = role === 'mentor' ? 'block' : 'none';
+            document.getElementById('menteeFields').style.display = role === 'mentee' ? 'block' : 'none';
+        });
+        
+        // Cargar datos del dashboard
+        async function loadDashboardData() {
+            try {
+                // Cargar estadísticas generales
+                const statsResponse = await fetch('http://localhost:8000/api/v1/statistics/global', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (statsResponse.ok) {
+                    const stats = await statsResponse.json();
+                    document.getElementById('totalMentors').textContent = stats.total_mentors;
+                    document.getElementById('totalMentees').textContent = stats.total_mentees;
+                    document.getElementById('totalSessions').textContent = stats.total_sessions;
+                    document.getElementById('totalHours').textContent = stats.total_mentoring_hours;
+                }
+                
+                // Cargar sesiones recientes
+                const sessionsResponse = await fetch('http://localhost:8000/api/v1/sessions/?limit=5', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (sessionsResponse.ok) {
+                    const sessions = await sessionsResponse.json();
+                    const sessionsTable = document.getElementById('recentSessionsTable');
+                    
+                    if (sessions.length === 0) {
+                        sessionsTable.innerHTML = `
+                            <tr>
+                                <td colspan="6" style="text-align: center;">No hay sesiones recientes</td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    sessionsTable.innerHTML = '';
+                    
+                    for (const session of sessions) {
+                        const date = new Date(session.start_time);
+                        const formattedDate = date.toLocaleDateString('es-ES');
+                        
+                        let statusClass = '';
+                        let statusText = '';
+                        
+                        switch (session.status) {
+                            case 'scheduled':
+                                statusClass = 'status-active';
+                                statusText = 'Programada';
+                                break;
+                            case 'completed':
+                                statusClass = 'status-active';
+                                statusText = 'Completada';
+                                break;
+                            case 'cancelled':
+                                statusClass = 'status-inactive';
+                                statusText = 'Cancelada';
+                                break;
+                            case 'no-show':
+                                statusClass = 'status-inactive';
+                                statusText = 'No asistió';
+                                break;
+                        }
+                        
+                        sessionsTable.innerHTML += `
+                            <tr>
+                                <td>${session.id}</td>
+                                <td>Mentor #${session.mentor_id}</td>
+                                <td>Mentil #${session.mentee_id}</td>
+                                <td>${formattedDate}</td>
+                                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="action-button" onclick="editSession(${session.id})">
+                                            <span class="material-icons">edit</span>
+                                        </button>
+                                        <button class="action-button" onclick="deleteSession(${session.id})">
+                                            <span class="material-icons">delete</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+                
+                // Cargar usuarios recientes
+                const usersResponse = await fetch('http://localhost:8000/api/v1/users/?limit=5', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (usersResponse.ok) {
+                    const users = await usersResponse.json();
+                    const usersTable = document.getElementById('recentUsersTable');
+                    
+                    if (users.length === 0) {
+                        usersTable.innerHTML = `
+                            <tr>
+                                <td colspan="6" style="text-align: center;">No hay usuarios recientes</td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    usersTable.innerHTML = '';
+                    
+                    for (const user of users) {
+                        const roleText = user.role === 'mentor' ? 'Mentor' : user.role === 'mentee' ? 'Mentil' : 'Administrador';
+                        
+                        usersTable.innerHTML += `
+                            <tr>
+                                <td>${user.id}</td>
+                                <td>${user.name}</td>
+                                <td>${user.email}</td>
+                                <td>${roleText}</td>
+                                <td>N/A</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="action-button" onclick="editUser(${user.id})">
+                                            <span class="material-icons">edit</span>
+                                        </button>
+                                        <button class="action-button" onclick="deleteUser(${user.id})">
+                                            <span class="material-icons">delete</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Error al cargar datos del dashboard:', error);
+            }
+        }
+        
+        // Cargar mentores
+        async function loadMentors() {
+            try {
+                // Obtener todos los usuarios
+                const response = await fetch('http://localhost:8000/api/v1/users/', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const users = await response.json();
+                    const mentorsTable = document.getElementById('mentorsTable');
+                    
+                    // Filtrar solo los usuarios con rol de mentor
+                    const mentors = users.filter(user => user.role === 'mentor');
+                    
+                    if (mentors.length === 0) {
+                        mentorsTable.innerHTML = `
+                            <tr>
+                                <td colspan="9" style="text-align: center;">No hay mentores registrados</td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    mentorsTable.innerHTML = '';
+                    
+                    // Para cada mentor, obtener su perfil detallado
+                    for (const mentor of mentors) {
+                        try {
+                            const mentorProfileResponse = await fetch(`http://localhost:8000/api/v1/users/${mentor.id}`, {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                }
+                            });
+                            
+                            if (mentorProfileResponse.ok) {
+                                const mentorProfile = await mentorProfileResponse.json();
+                                
+                                // Obtener las habilidades del mentor
+                                const skillsResponse = await fetch(`http://localhost:8000/api/v1/skills/mentor/${mentor.id}`, {
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`
+                                    }
+                                });
+                                
+                                let skillsText = 'N/A';
+                                if (skillsResponse.ok) {
+                                    const skills = await skillsResponse.json();
+                                    if (skills && skills.length > 0) {
+                                        skillsText = skills.map(s => s.skill.name).join(', ');
+                                    }
+                                }
+                                
+                                mentorsTable.innerHTML += `
+                                    <tr>
+                                        <td>${mentor.id}</td>
+                                        <td>${mentor.name}</td>
+                                        <td>${mentor.email}</td>
+                                        <td>${mentorProfile.mentor ? mentorProfile.mentor.position || 'N/A' : 'N/A'}</td>
+                                        <td>${mentorProfile.mentor ? mentorProfile.mentor.company || 'N/A' : 'N/A'}</td>
+                                        <td>${mentorProfile.mentor ? mentorProfile.mentor.experience_years || 0 : 0} años</td>
+                                        <td>${skillsText}</td>
+                                        <td><span class="status-badge status-active">Activo</span></td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="action-button" onclick="editMentor(${mentor.id})">
+                                                    <span class="material-icons">edit</span>
+                                                </button>
+                                                <button class="action-button" onclick="deleteMentor(${mentor.id})">
+                                                    <span class="material-icons">delete</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            }
+                        } catch (error) {
+                            console.error(`Error al cargar perfil del mentor ${mentor.id}:`, error);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error al cargar mentores:', error);
+            }
+        }        
+        // Cargar mentiles
+        async function loadMentees() {
+            try {
+                // Obtener todos los usuarios
+                const response = await fetch('http://localhost:8000/api/v1/users/', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const users = await response.json();
+                    const menteesTable = document.getElementById('menteesTable');
+                    
+                    // Filtrar solo los usuarios con rol de mentil
+                    const mentees = users.filter(user => user.role === 'mentee');
+                    
+                    if (mentees.length === 0) {
+                        menteesTable.innerHTML = `
+                            <tr>
+                                <td colspan="8" style="text-align: center;">No hay mentiles registrados</td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    menteesTable.innerHTML = '';
+                    
+                    // Para cada mentil, obtener su perfil detallado
+                    for (const mentee of mentees) {
+                        try {
+                            const menteeProfileResponse = await fetch(`http://localhost:8000/api/v1/users/${mentee.id}`, {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                }
+                            });
+                            
+                            if (menteeProfileResponse.ok) {
+                                const menteeProfile = await menteeProfileResponse.json();
+                                
+                                // Obtener los intereses del mentil
+                                const interestsResponse = await fetch(`http://localhost:8000/api/v1/skills/mentee/${mentee.id}`, {
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`
+                                    }
+                                });
+                                
+                                let interestsText = 'N/A';
+                                if (interestsResponse.ok) {
+                                    const interests = await interestsResponse.json();
+                                    if (interests && interests.length > 0) {
+                                        interestsText = interests.map(i => i.skill.name).join(', ');
+                                    }
+                                }
+                                
+                                menteesTable.innerHTML += `
+                                    <tr>
+                                        <td>${mentee.id}</td>
+                                        <td>${mentee.name}</td>
+                                        <td>${mentee.email}</td>
+                                        <td>${menteeProfile.mentee ? menteeProfile.mentee.current_position || 'N/A' : 'N/A'}</td>
+                                        <td>${menteeProfile.mentee ? menteeProfile.mentee.goals || 'N/A' : 'N/A'}</td>
+                                        <td>${interestsText}</td>
+                                        <td><span class="status-badge status-active">Activo</span></td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="action-button" onclick="editMentee(${mentee.id})">
+                                                    <span class="material-icons">edit</span>
+                                                </button>
+                                                <button class="action-button" onclick="deleteMentee(${mentee.id})">
+                                                    <span class="material-icons">delete</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            }
+                        } catch (error) {
+                            console.error(`Error al cargar perfil del mentil ${mentee.id}:`, error);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error al cargar mentiles:', error);
+            }
+        }        
+        // Cargar sesiones
+        async function loadSessions() {
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/sessions/', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const sessions = await response.json();
+                    const sessionsTable = document.getElementById('sessionsTable');
+                    
+                    if (sessions.length === 0) {
+                        sessionsTable.innerHTML = `
+                            <tr>
+                                <td colspan="8" style="text-align: center;">No hay sesiones registradas</td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    sessionsTable.innerHTML = '';
+                    
+                    for (const session of sessions) {
+                        const startDate = new Date(session.start_time);
+                        const endDate = new Date(session.end_time);
+                        const formattedDate = startDate.toLocaleDateString('es-ES');
+                        const formattedTime = startDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                        const durationMinutes = Math.round((endDate - startDate) / (1000 * 60));
+                        
+                        let statusClass = '';
+                        let statusText = '';
+                        
+                        switch (session.status) {
+                            case 'scheduled':
+                                statusClass = 'status-active';
+                                statusText = 'Programada';
+                                break;
+                            case 'completed':
+                                statusClass = 'status-active';
+                                statusText = 'Completada';
+                                break;
+                            case 'cancelled':
+                                statusClass = 'status-inactive';
+                                statusText = 'Cancelada';
+                                break;
+                            case 'no-show':
+                                statusClass = 'status-inactive';
+                                statusText = 'No asistió';
+                                break;
+                        }
+                        
+                        sessionsTable.innerHTML += `
+                            <tr>
+                                <td>${session.id}</td>
+                                <td>Mentor #${session.mentor_id}</td>
+                                <td>Mentil #${session.mentee_id}</td>
+                                <td>${formattedDate}</td>
+                                <td>${formattedTime}</td>
+                                <td>${durationMinutes} min</td>
+                                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="action-button" onclick="editSession(${session.id})">
+                                            <span class="material-icons">edit</span>
+                                        </button>
+                                        <button class="action-button" onclick="deleteSession(${session.id})">
+                                            <span class="material-icons">delete</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Error al cargar sesiones:', error);
+            }
+        }
+        
+        // Cargar mentores y mentiles para el formulario de sesión
+        async function loadMentors() {
+            try {
+                // Obtener todos los usuarios
+                const response = await fetch('http://localhost:8000/api/v1/users/', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const users = await response.json();
+                    const mentorsTable = document.getElementById('mentorsTable');
+                    
+                    // Filtrar solo los usuarios con rol de mentor
+                    const mentors = users.filter(user => user.role === 'mentor');
+                    
+                    if (mentors.length === 0) {
+                        mentorsTable.innerHTML = `
+                            <tr>
+                                <td colspan="9" style="text-align: center;">No hay mentores registrados</td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    mentorsTable.innerHTML = '';
+                    
+                    // Para cada mentor, obtener su perfil detallado
+                    for (const mentor of mentors) {
+                        try {
+                            const mentorProfileResponse = await fetch(`http://localhost:8000/api/v1/users/${mentor.id}`, {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                }
+                            });
+                            
+                            if (mentorProfileResponse.ok) {
+                                const mentorProfile = await mentorProfileResponse.json();
+                                
+                                // Obtener las habilidades del mentor
+                                const skillsResponse = await fetch(`http://localhost:8000/api/v1/skills/mentor/${mentor.id}`, {
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`
+                                    }
+                                });
+                                
+                                let skillsText = 'N/A';
+                                if (skillsResponse.ok) {
+                                    const skills = await skillsResponse.json();
+                                    if (skills && skills.length > 0) {
+                                        skillsText = skills.map(s => s.skill.name).join(', ');
+                                    }
+                                }
+                                
+                                mentorsTable.innerHTML += `
+                                    <tr>
+                                        <td>${mentor.id}</td>
+                                        <td>${mentor.name}</td>
+                                        <td>${mentor.email}</td>
+                                        <td>${mentorProfile.mentor ? mentorProfile.mentor.position || 'N/A' : 'N/A'}</td>
+                                        <td>${mentorProfile.mentor ? mentorProfile.mentor.company || 'N/A' : 'N/A'}</td>
+                                        <td>${mentorProfile.mentor ? mentorProfile.mentor.experience_years || 0 : 0} años</td>
+                                        <td>${skillsText}</td>
+                                        <td><span class="status-badge status-active">Activo</span></td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="action-button" onclick="editMentor(${mentor.id})">
+                                                    <span class="material-icons">edit</span>
+                                                </button>
+                                                <button class="action-button" onclick="deleteMentor(${mentor.id})">
+                                                    <span class="material-icons">delete</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            }
+                        } catch (error) {
+                            console.error(`Error al cargar perfil del mentor ${mentor.id}:`, error);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error al cargar mentores:', error);
+            }
+        }        
+        // Guardar sesión
+        document.getElementById('saveSessionBtn').addEventListener('click', async function() {
+            const sessionId = document.getElementById('sessionId').value;
+            const mentorId = document.getElementById('sessionMentor').value;
+            const menteeId = document.getElementById('sessionMentee').value;
+            const date = document.getElementById('sessionDate').value;
+            const time = document.getElementById('sessionTime').value;
+            const duration = document.getElementById('sessionDuration').value;
+            const status = document.getElementById('sessionStatus').value;
+            const notes = document.getElementById('sessionNotes').value;
+            
+            if (!mentorId || !menteeId || !date || !time || !duration) {
+                alert('Por favor, complete todos los campos obligatorios.');
+                return;
+            }
+            
+            // Crear objetos de fecha para inicio y fin
+            const startTime = new Date(`${date}T${time}`);
+            const endTime = new Date(startTime.getTime() + duration * 60000);
+            
+            const sessionData = {
+                mentor_id: parseInt(mentorId),
+                mentee_id: parseInt(menteeId),
+                start_time: startTime.toISOString(),
+                end_time: endTime.toISOString(),
+                status: status,
+                notes: notes
+            };
+            
+            try {
+                // Si estamos actualizando una sesión, primero verificamos si el mentor tiene integración con Google Calendar
+                if (sessionId) {
+                    // Obtener información de la sesión actual
+                    const sessionResponse = await fetch(`http://localhost:8000/api/v1/sessions/${sessionId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (sessionResponse.ok) {
+                        const sessionData = await sessionResponse.json();
+                        
+                        // Verificar si el mentor ha cambiado
+                        if (parseInt(mentorId) !== sessionData.mentor_id) {
+                            // Si el mentor ha cambiado, verificar si el nuevo mentor tiene integración con Google Calendar
+                            const mentorResponse = await fetch(`http://localhost:8000/api/v1/users/${mentorId}`, {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                }
+                            });
+                            
+                            if (mentorResponse.ok) {
+                                const mentorData = await mentorResponse.json();
+                                
+                                // Si el mentor no tiene integración con Google Calendar, mostrar una advertencia
+                                if (!mentorData.mentor || !mentorData.mentor.calendar_integration) {
+                                    if (!confirm('El mentor seleccionado no tiene integración con Google Calendar. Las invitaciones no se enviarán automáticamente. ¿Desea continuar?')) {
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Proceder con la creación o actualización de la sesión
+                let response;
+                
+                if (sessionId) {
+                    // Actualizar sesión existente
+                    response = await fetch(`http://localhost:8000/api/v1/sessions/${sessionId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(sessionData)
+                    });
+                } else {
+                    // Crear nueva sesión
+                    response = await fetch('http://localhost:8000/api/v1/sessions/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(sessionData)
+                    });
+                }
+                
+                if (response.ok) {
+                    const sessionResponse = await response.json();
+                    
+                    // Verificar si se creó o actualizó el evento en el calendario
+                    if (!sessionResponse.calendar_event_id && !sessionResponse.meeting_link) {
+                        // Si no se creó o actualizó el evento en el calendario, mostrar un mensaje de advertencia
+                        alert(sessionId ? 
+                            'Sesión actualizada correctamente, pero no se pudo enviar la actualización al calendario. Verifique que el mentor tenga integración con Google Calendar.' : 
+                            'Sesión creada correctamente, pero no se pudo enviar la invitación al calendario. Verifique que el mentor tenga integración con Google Calendar.');
+                    } else {
+                        alert(sessionId ? 
+                            'Sesión actualizada correctamente. Se ha enviado una actualización al calendario.' : 
+                            'Sesión creada correctamente. Se ha enviado una invitación al calendario.');
+                    }
+                    
+                    closeModal('sessionModal');
+                    loadSessions();
+                    loadDashboardData();
+                } else {
+                    const error = await response.json();
+                    alert(`Error: ${error.detail || 'No se pudo guardar la sesión.'}`); 
+                }
+            } catch (error) {
+                console.error('Error al guardar la sesión:', error);
+                alert('Error al guardar la sesión. Por favor, inténtelo de nuevo.');
+            }
+        });
+                    // Crear nueva sesión
+                    response = await fetch('http://localhost:8000/api/v1/sessions/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(sessionData)
+                    });
+                }
+                
+                if (response.ok) {
+                    const sessionResponse = await response.json();
+                    
+                    // Verificar si se creó el evento en el calendario
+                    if (!sessionResponse.calendar_event_id && !sessionResponse.meeting_link) {
+                        // Si no se creó el evento en el calendario, mostrar un mensaje de advertencia
+                        alert(sessionId ? 
+                            'Sesión actualizada correctamente, pero no se pudo enviar la invitación al calendario. Verifique que el mentor tenga integración con Google Calendar.' : 
+                            'Sesión creada correctamente, pero no se pudo enviar la invitación al calendario. Verifique que el mentor tenga integración con Google Calendar.');
+                    } else {
+                        alert(sessionId ? 
+                            'Sesión actualizada correctamente. Se ha enviado una invitación al calendario.' : 
+                            'Sesión creada correctamente. Se ha enviado una invitación al calendario.');
+                    }
+                    
+                    closeModal('sessionModal');
+                    loadSessions();
+                    loadDashboardData();
+                } else {
+                    const error = await response.json();
+        // Función para verificar la integración con Google Calendar del mentor seleccionado
+        async function checkMentorCalendarIntegration() {
+            const mentorId = document.getElementById('sessionMentor').value;
+            
+            if (!mentorId) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`http://localhost:8000/api/v1/users/${mentorId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const mentor = await response.json();
+                    
+                    // Verificar si el mentor tiene integración con Google Calendar
+                    if (!mentor.mentor || !mentor.mentor.calendar_integration) {
+                        // Mostrar un mensaje de advertencia
+                        const warningElement = document.createElement('div');
+                        warningElement.id = 'calendarIntegrationWarning';
+                        warningElement.style.color = '#f44336';
+                        warningElement.style.marginTop = '10px';
+                        warningElement.innerHTML = `
+                            <div style="display: flex; align-items: center;">
+                                <span class="material-icons" style="margin-right: 5px;">warning</span>
+                                <span>El mentor seleccionado no tiene integración con Google Calendar. Las invitaciones no se enviarán automáticamente.</span>
+                            </div>
+                            <button type="button" class="btn btn-secondary" style="margin-top: 5px;" onclick="setupCalendarIntegration(${mentorId})">
+                                Configurar integración
+                            </button>
+                        `;
+                        
+                        // Eliminar advertencia anterior si existe
+                        const existingWarning = document.getElementById('calendarIntegrationWarning');
+                        if (existingWarning) {
+                            existingWarning.remove();
+                        }
+                        
+                        // Agregar la advertencia después del selector de mentor
+                        const mentorSelect = document.getElementById('sessionMentor');
+                        mentorSelect.parentNode.appendChild(warningElement);
+                    } else {
+                        // Eliminar advertencia si existe
+                        const existingWarning = document.getElementById('calendarIntegrationWarning');
+                        if (existingWarning) {
+                            existingWarning.remove();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error al verificar integración con Google Calendar:', error);
+            }
+        }
+        
+        // Agregar event listener al selector de mentor
+        document.getElementById('sessionMentor').addEventListener('change', checkMentorCalendarIntegration);
+                    alert(`Error: ${error.detail || 'No se pudo guardar la sesión.'}`); 
+                }
+            } catch (error) {
+                console.error('Error al guardar la sesión:', error);
+                alert('Error al guardar la sesión. Por favor, inténtelo de nuevo.');
+            }
+        });
+                    // Crear nueva sesión
+                    response = await fetch('http://localhost:8000/api/v1/sessions/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(sessionData)
+                    });
+                }
+                
+                if (response.ok) {
+                    closeModal('sessionModal');
+                    loadSessions();
+                    loadDashboardData();
+                    alert(sessionId ? 'Sesión actualizada correctamente.' : 'Sesión creada correctamente.');
+                } else {
+                    const error = await response.json();
+                    alert(`Error: ${error.detail || 'No se pudo guardar la sesión.'}`);
+                }
+            } catch (error) {
+                console.error('Error al guardar la sesión:', error);
+                alert('Error al guardar la sesión. Por favor, inténtelo de nuevo.');
+            }
+        });
+        
+        // Funciones para editar y eliminar
+        window.editSession = async function(id) {
+            try {
+                const response = await fetch(`http://localhost:8000/api/v1/sessions/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const session = await response.json();
+                    
+                    document.getElementById('sessionModalTitle').textContent = 'Editar Sesión';
+                    document.getElementById('sessionId').value = session.id;
+                    
+                    // Cargar mentores y mentiles
+                    await loadMentorsAndMentees();
+                    
+                    // Establecer valores del formulario
+                    document.getElementById('sessionMentor').value = session.mentor_id;
+                    document.getElementById('sessionMentee').value = session.mentee_id;
+                    
+                    const startTime = new Date(session.start_time);
+                    const endTime = new Date(session.end_time);
+                    const durationMinutes = Math.round((endTime - startTime) / (1000 * 60));
+                    
+                    document.getElementById('sessionDate').value = startTime.toISOString().split('T')[0];
+                    document.getElementById('sessionTime').value = startTime.toTimeString().slice(0, 5);
+                    document.getElementById('sessionDuration').value = durationMinutes;
+                    document.getElementById('sessionStatus').value = session.status;
+                    document.getElementById('sessionNotes').value = session.notes || '';
+                    
+                    openModal('sessionModal');
+                    
+                    // Verificar la integración con Google Calendar después de cargar los datos de la sesión
+                    setTimeout(checkMentorCalendarIntegration, 500);
+                }
+            } catch (error) {
+                console.error('Error al cargar la sesión:', error);
+                alert('Error al cargar la sesión. Por favor, inténtelo de nuevo.');
+            }
+        };        
+        window.deleteSession = async function(id) {
+            if (confirm('¿Está seguro de que desea eliminar esta sesión?')) {
+                try {
+                    const response = await fetch(`http://localhost:8000/api/v1/sessions/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        loadSessions();
+                        loadDashboardData();
+                        alert('Sesión eliminada correctamente.');
+                    } else {
+                        const error = await response.json();
+                        alert(`Error: ${error.detail || 'No se pudo eliminar la sesión.'}`);
+                    }
+                } catch (error) {
+                    console.error('Error al eliminar la sesión:', error);
+                    alert('Error al eliminar la sesión. Por favor, inténtelo de nuevo.');
+                }
+            }
+        };
+        
+        // Cargar datos al iniciar
+        window.addEventListener('DOMContentLoaded', function() {
+            // Verificar si hay una pestaña activa en localStorage
+            const activeTab = localStorage.getItem('adminActiveTab');
+            if (activeTab) {
+                document.querySelector(`'.tab[data-tab="${activeTab}"]`).click();
+                localStorage.removeItem('adminActiveTab');
+            }            loadDashboardData();
+            
+            // Añadir event listeners para las pestañas
+            document.querySelector('.tab[data-tab="mentors"]').addEventListener('click', loadMentors);
+            document.querySelector('.tab[data-tab="mentees"]').addEventListener('click', loadMentees);
+            document.querySelector('.tab[data-tab="sessions"]').addEventListener('click', loadSessions);
+            
+            // Botón para ver todas las sesiones
+            document.getElementById('viewAllSessionsBtn').addEventListener('click', function() {
+                document.querySelector('.tab[data-tab="sessions"]').click();
+            });
+        });
+        // Función para cargar mentores y mentiles en el formulario de sesión
+        async function loadMentorsAndMentees() {
+            try {
+                // Obtener todos los usuarios
+                const usersResponse = await fetch('http://localhost:8000/api/v1/users/', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (usersResponse.ok) {
+                    const users = await usersResponse.json();
+                    
+                    // Filtrar mentores y mentiles
+                    const mentors = users.filter(user => user.role === 'mentor');
+                    const mentees = users.filter(user => user.role === 'mentee');
+                    
+                    // Actualizar select de mentores
+                    const mentorSelect = document.getElementById('sessionMentor');
+                    mentorSelect.innerHTML = '<option value="">Seleccionar mentor</option>';
+                    
+                    for (const mentor of mentors) {
+                        mentorSelect.innerHTML += `
+                            <option value="${mentor.id}">${mentor.name}</option>
+                        `;
+                    }
+                    
+                    // Actualizar select de mentiles
+                    const menteeSelect = document.getElementById('sessionMentee');
+                    menteeSelect.innerHTML = '<option value="">Seleccionar mentil</option>';
+                    
+                    for (const mentee of mentees) {
+                        menteeSelect.innerHTML += `
+                            <option value="${mentee.id}">${mentee.name}</option>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Error al cargar mentores y mentiles:', error);
+            }
+        }
+        // Event listener para guardar usuario
+        document.getElementById('saveUserBtn').addEventListener('click', async function() {
+            const userId = document.getElementById('userId').value;
+            const name = document.getElementById('userNameInput').value;
+            const email = document.getElementById('userEmail').value;
+            const password = document.getElementById('userPassword').value;
+            const role = document.getElementById('userRoleSelect').value;
+            
+            if (!name || !email || (!userId && !password) || !role) {
+                alert('Por favor, complete todos los campos obligatorios.');
+                return;
+            }
+            
+            // Crear objeto de datos del usuario
+            const userData = {
+                name: name,
+                email: email,
+                role: role
+            };
+            
+            // Añadir contraseña solo si se proporciona
+            if (password) {
+                userData.password = password;
+            }
+            
+            try {
+                let response;
+                
+                if (userId) {
+                    // Actualizar usuario existente
+                    response = await fetch(`http://localhost:8000/api/v1/users/${userId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(userData)
+                    });
+                } else {
+                    // Crear nuevo usuario
+                    response = await fetch('http://localhost:8000/api/v1/users/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({...userData, password: password})
+                    });
+                }
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    
+                    // Si es un mentor, actualizar perfil de mentor
+                    if (role === 'mentor' && document.getElementById('mentorFields').style.display === 'block') {
+                        const mentorData = {
+                            bio: document.getElementById('mentorBio').value,
+                            experience_years: parseInt(document.getElementById('mentorExperience').value) || 0,
+                            company: document.getElementById('mentorCompany').value,
+                            position: document.getElementById('mentorPosition').value,
+                            linkedin_url: document.getElementById('mentorLinkedin').value
+                        };
+                        
+                        const mentorResponse = await fetch(`http://localhost:8000/api/v1/users/${user.id}/mentor`, {
+                            method: userId ? 'PUT' : 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify(mentorData)
+                        });
+                        
+                        if (!mentorResponse.ok) {
+                            console.error('Error al guardar perfil de mentor:', await mentorResponse.json());
+                        }
+                    }
+                    
+                    // Si es un mentil, actualizar perfil de mentil
+                    if (role === 'mentee' && document.getElementById('menteeFields').style.display === 'block') {
+                        const menteeData = {
+                            bio: document.getElementById('menteeBio').value,
+                            goals: document.getElementById('menteeGoals').value,
+                            current_position: document.getElementById('menteePosition').value,
+                            linkedin_url: document.getElementById('menteeLinkedin').value
+                        };
+                        
+                        const menteeResponse = await fetch(`http://localhost:8000/api/v1/users/${user.id}/mentee`, {
+                            method: userId ? 'PUT' : 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify(menteeData)
+                        });
+                        
+                        if (!menteeResponse.ok) {
+                            console.error('Error al guardar perfil de mentil:', await menteeResponse.json());
+                        }
+                    }
+                    
+                    closeModal('userModal');
+                    loadMentors();
+                    loadMentees();
+                    loadDashboardData();
+                    alert(userId ? 'Usuario actualizado correctamente.' : 'Usuario creado correctamente.');
+                } else {
+                    const error = await response.json();
+                    alert(`Error: ${error.detail || 'No se pudo guardar el usuario.'}`); 
+                }
+            } catch (error) {
+                console.error('Error al guardar el usuario:', error);
+                alert('Error al guardar el usuario. Por favor, inténtelo de nuevo.');
+            }
+        });
+        // Función para editar un mentor
+        window.editMentor = async function(id) {
+            try {
+                // Obtener información del mentor
+                const response = await fetch(`http://localhost:8000/api/v1/users/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    
+                    // Configurar el modal para edición
+                    document.getElementById('userModalTitle').textContent = 'Editar Mentor';
+                    document.getElementById('userId').value = user.id;
+                    document.getElementById('userNameInput').value = user.name;
+                    document.getElementById('userEmail').value = user.email;
+                    document.getElementById('userPassword').value = '';
+                    document.getElementById('userRoleSelect').value = user.role;
+                    
+                    // Mostrar campos específicos de mentor
+                    document.getElementById('mentorFields').style.display = 'block';
+                    document.getElementById('menteeFields').style.display = 'none';
+                    
+                    // Llenar campos de mentor si existen
+                    if (user.mentor) {
+                        document.getElementById('mentorBio').value = user.mentor.bio || '';
+                        document.getElementById('mentorExperience').value = user.mentor.experience_years || '';
+                        document.getElementById('mentorCompany').value = user.mentor.company || '';
+                        document.getElementById('mentorPosition').value = user.mentor.position || '';
+                        document.getElementById('mentorLinkedin').value = user.mentor.linkedin_url || '';
+                    }
+                    
+                    // Cargar habilidades del mentor
+                    try {
+                        const skillsResponse = await fetch(`http://localhost:8000/api/v1/skills/mentor/${id}`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        
+                        if (skillsResponse.ok) {
+                            const skills = await skillsResponse.json();
+                            const skillsContainer = document.getElementById('mentorSkillsContainer');
+                            
+                            // Limpiar contenedor de habilidades
+                            skillsContainer.innerHTML = '';
+                            
+                            // Añadir habilidades existentes
+                            if (skills && skills.length > 0) {
+                                for (const skill of skills) {
+                                    skillsContainer.innerHTML += `
+                                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                            <input type="text" class="form-control" value="${skill.skill.name}" readonly style="margin-right: 10px;">
+                                            <select class="form-select" style="width: 150px; margin-right: 10px;">
+                                                <option value="1" ${skill.proficiency_level === 1 ? 'selected' : ''}>Básico</option>
+                                                <option value="2" ${skill.proficiency_level === 2 ? 'selected' : ''}>Intermedio</option>
+                                                <option value="3" ${skill.proficiency_level === 3 ? 'selected' : ''}>Avanzado</option>
+                                                <option value="4" ${skill.proficiency_level === 4 ? 'selected' : ''}>Experto</option>
+                                                <option value="5" ${skill.proficiency_level === 5 ? 'selected' : ''}>Maestro</option>
+                                            </select>
+                                            <button type="button" class="btn btn-secondary" onclick="this.parentElement.remove()">Eliminar</button>
+                                        </div>
+                                    `;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error al cargar habilidades del mentor:', error);
+                    }
+                    
+                    // Abrir el modal
+                    openModal('userModal');
+                }
+            } catch (error) {
+                console.error('Error al cargar información del mentor:', error);
+                alert('Error al cargar información del mentor. Por favor, inténtelo de nuevo.');
+            }
+        };
+        
+        // Función para editar un mentil
+        window.editMentee = async function(id) {
+            try {
+                // Obtener información del mentil
+                const response = await fetch(`http://localhost:8000/api/v1/users/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    
+                    // Configurar el modal para edición
+                    document.getElementById('userModalTitle').textContent = 'Editar Mentil';
+                    document.getElementById('userId').value = user.id;
+                    document.getElementById('userNameInput').value = user.name;
+                    document.getElementById('userEmail').value = user.email;
+                    document.getElementById('userPassword').value = '';
+                    document.getElementById('userRoleSelect').value = user.role;
+                    
+                    // Mostrar campos específicos de mentil
+                    document.getElementById('mentorFields').style.display = 'none';
+                    document.getElementById('menteeFields').style.display = 'block';
+                    
+                    // Llenar campos de mentil si existen
+                    if (user.mentee) {
+                        document.getElementById('menteeBio').value = user.mentee.bio || '';
+                        document.getElementById('menteeGoals').value = user.mentee.goals || '';
+                        document.getElementById('menteePosition').value = user.mentee.current_position || '';
+                        document.getElementById('menteeLinkedin').value = user.mentee.linkedin_url || '';
+                    }
+                    
+                    // Cargar intereses del mentil
+                    try {
+                        const interestsResponse = await fetch(`http://localhost:8000/api/v1/skills/mentee/${id}`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        
+                        if (interestsResponse.ok) {
+                            const interests = await interestsResponse.json();
+                            const interestsContainer = document.getElementById('menteeInterestsContainer');
+                            
+                            // Limpiar contenedor de intereses
+                            interestsContainer.innerHTML = '';
+                            
+                            // Añadir intereses existentes
+                            if (interests && interests.length > 0) {
+                                for (const interest of interests) {
+                                    interestsContainer.innerHTML += `
+                                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                            <input type="text" class="form-control" value="${interest.skill.name}" readonly style="margin-right: 10px;">
+                                            <select class="form-select" style="width: 150px; margin-right: 10px;">
+                                                <option value="1" ${interest.interest_level === 1 ? 'selected' : ''}>Bajo</option>
+                                                <option value="2" ${interest.interest_level === 2 ? 'selected' : ''}>Medio-Bajo</option>
+                                                <option value="3" ${interest.interest_level === 3 ? 'selected' : ''}>Medio</option>
+                                                <option value="4" ${interest.interest_level === 4 ? 'selected' : ''}>Medio-Alto</option>
+                                                <option value="5" ${interest.interest_level === 5 ? 'selected' : ''}>Alto</option>
+                                            </select>
+                                            <button type="button" class="btn btn-secondary" onclick="this.parentElement.remove()">Eliminar</button>
+                                        </div>
+                                    `;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error al cargar intereses del mentil:', error);
+                    }
+                    
+                    // Abrir el modal
+                    openModal('userModal');
+                }
+            } catch (error) {
+                console.error('Error al cargar información del mentil:', error);
+                alert('Error al cargar información del mentil. Por favor, inténtelo de nuevo.');
+            }
+        };
+        
+        // Función para eliminar un mentor
+        window.deleteMentor = async function(id) {
+            if (confirm('¿Está seguro de que desea eliminar este mentor?')) {
+                try {
+                    const response = await fetch(`http://localhost:8000/api/v1/users/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        loadMentors();
+                        loadDashboardData();
+                        alert('Mentor eliminado correctamente.');
+                    } else {
+                        const error = await response.json();
+                        alert(`Error: ${error.detail || 'No se pudo eliminar el mentor.'}`); 
+                    }
+                } catch (error) {
+                    console.error('Error al eliminar el mentor:', error);
+                    alert('Error al eliminar el mentor. Por favor, inténtelo de nuevo.');
+                }
+            }
+        };
+        
+        // Función para eliminar un mentil
+        window.deleteMentee = async function(id) {
+            if (confirm('¿Está seguro de que desea eliminar este mentil?')) {
+                try {
+                    const response = await fetch(`http://localhost:8000/api/v1/users/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        loadMentees();
+                        loadDashboardData();
+                        alert('Mentil eliminado correctamente.');
+                    } else {
+                        const error = await response.json();
+                        alert(`Error: ${error.detail || 'No se pudo eliminar el mentil.'}`); 
+                    }
+                } catch (error) {
+                    console.error('Error al eliminar el mentil:', error);
+                    alert('Error al eliminar el mentil. Por favor, inténtelo de nuevo.');
+                }
+            }
+        };
+    </script>
+</body>
+</html>

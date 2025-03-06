@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesiones - Mentor Match</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: #fff;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .sidebar-header .material-icons {
+            font-size: 24px;
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+        
+        .sidebar-header h1 {
+            font-size: 18px;
+            color: var(--primary-color);
+            margin: 0;
+        }
+        
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+        
+        .menu-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .menu-item:hover {
+            background-color: #f5f5f5;
+            color: var(--primary-color);
+        }
+        
+        .menu-item.active {
+            background-color: #f0f0f0;
+            color: var(--primary-color);
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .menu-item .material-icons {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .topbar-title h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+        }
+        
+        .notification-icon {
+            position: relative;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: 500;
+        }
+        
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .user-name {
+            font-weight: 500;
+        }
+        
+        .user-role {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Estilos específicos para la página de sesiones */
+        .sessions-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .tab.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .sessions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .session-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        
+        .session-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .session-header {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .session-title {
+            font-weight: 500;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .session-title .material-icons {
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+        
+        .session-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-scheduled {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status-completed {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .status-cancelled {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+        
+        .status-no-show {
+            background-color: #fafafa;
+            color: #616161;
+        }
+        
+        .session-body {
+            padding: 20px;
+        }
+        
+        .session-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-weight: 500;
+        }
+        
+        .session-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .session-action-button {
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .primary-button {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .primary-button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .secondary-button {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+        
+        .secondary-button:hover {
+            background-color: rgba(63, 81, 181, 0.1);
+        }
+        
+        .danger-button {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .danger-button:hover {
+            background-color: #d32f2f;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 500;
+            margin: 0;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
+        }
+        
+        .rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+        }
+        
+        .rating input {
+            display: none;
+        }
+        
+        .rating label {
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            margin: 0;
+            padding: 0;
+            font-size: 30px;
+            color: #ddd;
+        }
+        
+        .rating label:before {
+            content: '★';
+        }
+        
+        .rating input:checked ~ label {
+            color: #ffb400;
+        }
+        
+        .rating label:hover,
+        .rating label:hover ~ label {
+            color: #ffb400;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .mobile-toggle {
+                display: block;
+            }
+            
+            .session-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <span class="material-icons">handshake</span>
+                <h1>Mentor Match</h1>
+            </div>
+            <div class="sidebar-menu">
+                <a href="dashboard.html" class="menu-item">
+                    <span class="material-icons">dashboard</span>
+                    Dashboard
+                </a>
+                <a href="mentors.html" class="menu-item">
+                    <span class="material-icons">person</span>
+                    Mentores
+                </a>
+                <a href="sessions.html" class="menu-item active">
+                    <span class="material-icons">event</span>
+                    Sesiones
+                </a>
+                <a href="matchmaking.html" class="menu-item">
+                    <span class="material-icons">handshake</span>
+                    Matchmaking
+                </a>
+                <a href="#" class="menu-item">
+                    <span class="material-icons">calendar_today</span>
+                    Calendario
+                </a>
+                <a href="statistics.html" class="menu-item">
+                    <span class="material-icons">insights</span>
+                    Estadísticas
+                </a>
+                <a href="#" class="menu-item">
+                    <span class="material-icons">settings</span>
+                    Configuración
+                </a>
+                <a href="#" class="menu-item" id="logoutButton">
+                    <span class="material-icons">logout</span>
+                    Cerrar sesión
+                </a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="topbar">
+                <div class="topbar-title">
+                    <h1>Mis Sesiones</h1>
+                </div>
+                <div class="topbar-actions">
+                    <div class="notification-icon">
+                        <span class="material-icons">notifications</span>
+                        <span class="notification-badge" id="notificationBadge">0</span>
+                    </div>
+                    <div class="user-profile">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <div class="user-info">
+                            <div class="user-name" id="userName">Usuario</div>
+                            <div class="user-role" id="userRole">Rol</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sessions-tabs">
+                <div class="tab active" data-tab="upcoming">Próximas</div>
+                <div class="tab" data-tab="past">Pasadas</div>
+                <div class="tab" data-tab="all">Todas</div>
+            </div>
+            
+            <div class="sessions-list" id="sessionsList">
+                <!-- Las sesiones se cargarán dinámicamente -->
+                <div class="session-card">
+                    <div class="session-header">
+                        <div class="session-title">
+                            <span class="material-icons">event</span>
+                            Cargando sesiones...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal para cancelar sesión -->
+            <div class="modal" id="cancelModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Cancelar Sesión</h2>
+                        <button class="modal-close" id="closeCancelModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p>¿Estás seguro de que deseas cancelar esta sesión?</p>
+                        <p>Esta acción no se puede deshacer.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="session-action-button secondary-button" id="cancelCancelButton">No, mantener</button>
+                        <button class="session-action-button danger-button" id="confirmCancelButton">Sí, cancelar</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal para proporcionar feedback -->
+            <div class="modal" id="feedbackModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Evaluar Sesión</h2>
+                        <button class="modal-close" id="closeFeedbackModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Calificación</label>
+                            <div class="rating">
+                                <input type="radio" id="star5" name="rating" value="5">
+                                <label for="star5"></label>
+                                <input type="radio" id="star4" name="rating" value="4">
+                                <label for="star4"></label>
+                                <input type="radio" id="star3" name="rating" value="3">
+                                <label for="star3"></label>
+                                <input type="radio" id="star2" name="rating" value="2">
+                                <label for="star2"></label>
+                                <input type="radio" id="star1" name="rating" value="1">
+                                <label for="star1"></label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="feedbackComments">Comentarios</label>
+                            <textarea id="feedbackComments" class="form-control" rows="4" placeholder="Comparte tu experiencia y sugerencias..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="session-action-button secondary-button" id="cancelFeedbackButton">Cancelar</button>
+                        <button class="session-action-button primary-button" id="submitFeedbackButton">Enviar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Verificar si el usuario está autenticado
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        if (!token || !user) {
+            window.location.href = 'login.html';
+        }
+        
+        // Actualizar información del usuario
+        document.getElementById('userName').textContent = user.name || 'Usuario';
+        document.getElementById('userRole').textContent = user.role === 'mentor' ? 'Mentor' : 'Mentil';
+        document.getElementById('userAvatar').textContent = (user.name || 'U').charAt(0).toUpperCase();
+        
+        // Cerrar sesión
+        document.getElementById('logoutButton').addEventListener('click', function() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        });
+        
+        // Variables globales
+        let sessions = [];
+        let selectedSession = null;
+        let activeTab = 'upcoming';
+        
+        // Cambiar entre pestañas
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                activeTab = this.getAttribute('data-tab');
+                renderSessions();
+            });
+        });
+        
+        // Cargar sesiones
+        async function loadSessions() {
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/sessions/', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    sessions = await response.json();
+                    
+                    // Cargar detalles adicionales para cada sesión
+                    for (const session of sessions) {
+                        // Cargar información del mentor si el usuario es mentil
+                        if (user.role === 'mentee' && session.mentor_id !== user.id) {
+                            const mentorResponse = await fetch(`http://localhost:8000/api/v1/users/${session.mentor_id}`, {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                }
+                            });
+                            
+                            if (mentorResponse.ok) {
+                                const mentor = await mentorResponse.json();
+                                session.mentor = mentor;
+                            }
+                        }
+                        
+                        // Cargar información del mentil si el usuario es mentor
+                        if (user.role === 'mentor' && session.mentee_id !== user.id) {
+                            const menteeResponse = await fetch(`http://localhost:8000/api/v1/users/${session.mentee_id}`, {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                }
+                            });
+                            
+                            if (menteeResponse.ok) {
+                                const mentee = await menteeResponse.json();
+                                session.mentee = mentee;
+                            }
+                        }
+                        
+                        // Cargar feedback si la sesión está completada
+                        if (session.status === 'completed') {
+                            const feedbackResponse = await fetch(`http://localhost:8000/api/v1/sessions/${session.id}/feedback`, {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                }
+                            });
+                            
+                            if (feedbackResponse.ok) {
+                                const feedback = await feedbackResponse.json();
+                                session.feedback = feedback;
+                            }
+                        }
+                    }
+                    
+                    renderSessions();
+                }
+            } catch (error) {
+                console.error('Error al cargar sesiones:', error);
+            }
+        }
+        
+        // Renderizar sesiones
+        function renderSessions() {
+            const sessionsList = document.getElementById('sessionsList');
+            sessionsList.innerHTML = '';
+            
+            // Filtrar sesiones según la pestaña activa
+            let filteredSessions = [...sessions];
+            const now = new Date();
+            
+            if (activeTab === 'upcoming') {
+                filteredSessions = filteredSessions.filter(session => 
+                    new Date(session.start_time) > now && session.status !== 'cancelled'
+                );
+            } else if (activeTab === 'past') {
+                filteredSessions = filteredSessions.filter(session => 
+                    new Date(session.start_time) < now || session.status === 'completed' || session.status === 'no-show'
+                );
+            }
+            
+            // Ordenar sesiones por fecha (las más recientes primero)
+            filteredSessions.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+            
+            if (filteredSessions.length === 0) {
+                sessionsList.innerHTML = `
+                    <div class="session-card">
+                        <div class="session-header">
+                            <div class="session-title">
+                                <span class="material-icons">info</span>
+                                No hay sesiones para mostrar
+                            </div>
+                        </div>
+                        <div class="session-body">
+                            <p>No se encontraron sesiones para esta categoría.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            filteredSessions.forEach(session => {
+                const sessionCard = document.createElement('div');
+                sessionCard.className = 'session-card';
+                
+                const startTime = new Date(session.start_time);
+                const endTime = new Date(session.end_time);
+                
+                const formattedDate = startTime.toLocaleDateString('es-ES', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                const formattedStartTime = startTime.toLocaleTimeString('es-ES', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                const formattedEndTime = endTime.toLocaleTimeString('es-ES', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                const duration = (endTime - startTime) / (1000 * 60); // duración en minutos
+                
+                let statusClass = '';
+                let statusText = '';
+                
+                switch (session.status) {
+                    case 'scheduled':
+                        statusClass = 'status-scheduled';
+                        statusText = 'Programada';
+                        break;
+                    case 'completed':
+                        statusClass = 'status-completed';
+                        statusText = 'Completada';
+                        break;
+                    case 'cancelled':
+                        statusClass = 'status-cancelled';
+                        statusText = 'Cancelada';
+                        break;
+                    case 'no-show':
+                        statusClass = 'status-no-show';
+                        statusText = 'No asistió';
+                        break;
+                    default:
+                        statusClass = 'status-scheduled';
+                        statusText = 'Programada';
+                }
+                
+                // Determinar con quién es la sesión
+                let sessionWith = '';
+                if (user.role === 'mentee') {
+                    sessionWith = session.mentor ? session.mentor.name : `Mentor ID: ${session.mentor_id}`;
+                } else {
+                    sessionWith = session.mentee ? session.mentee.name : `Mentil ID: ${session.mentee_id}`;
+                }
+                
+                // Verificar si el usuario ya ha proporcionado feedback
+                const userHasProvidedFeedback = session.feedback && session.feedback.some(f => f.created_by === user.id);
+                
+                // Determinar qué acciones mostrar según el estado de la sesión
+                let actionsHtml = '';
+                
+                if (session.status === 'scheduled') {
+                    // Si la sesión está programada
+                    if (startTime > now) {
+                        // Si la sesión es en el futuro
+                        actionsHtml = `
+                            <button class="session-action-button danger-button cancel-session" data-id="${session.id}">Cancelar</button>
+                        `;
+                        
+                        // Si la sesión es en menos de 15 minutos, mostrar botón para unirse
+                        const fifteenMinutesBeforeStart = new Date(startTime.getTime() - 15 * 60000);
+                        if (now >= fifteenMinutesBeforeStart) {
+                            actionsHtml = `
+                                <button class="session-action-button danger-button cancel-session" data-id="${session.id}">Cancelar</button>
+                                <button class="session-action-button primary-button join-session" data-id="${session.id}">Unirse</button>
+                            `;
+                        }
+                    }
+                } else if (session.status === 'completed' && !userHasProvidedFeedback) {
+                    // Si la sesión está completada y el usuario no ha proporcionado feedback
+                    actionsHtml = `
+                        <button class="session-action-button primary-button provide-feedback" data-id="${session.id}">Evaluar</button>
+                    `;
+                }
+                
+                sessionCard.innerHTML = `
+                    <div class="session-header">
+                        <div class="session-title">
+                            <span class="material-icons">event</span>
+                            Sesión con ${sessionWith}
+                        </div>
+                        <div class="session-status ${statusClass}">${statusText}</div>
+                    </div>
+                    <div class="session-body">
+                        <div class="session-info">
+                            <div class="info-item">
+                                <div class="info-label">Fecha</div>
+                                <div class="info-value">${formattedDate}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Hora</div>
+                                <div class="info-value">${formattedStartTime} - ${formattedEndTime} (${duration} min)</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Enlace de reunión</div>
+                                <div class="info-value">${session.meeting_link ? `<a href="${session.meeting_link}" target="_blank">${session.meeting_link}</a>` : 'No disponible'}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Feedback</div>
+                                <div class="info-value">${userHasProvidedFeedback ? 'Proporcionado' : 'Pendiente'}</div>
+                            </div>
+                        </div>
+                    </div>
+                    ${actionsHtml ? `<div class="session-actions">${actionsHtml}</div>` : ''}
+                `;
+                
+                sessionsList.appendChild(sessionCard);
+            });
+            
+            // Agregar event listeners a los botones
+            document.querySelectorAll('.cancel-session').forEach(button => {
+                button.addEventListener('click', function() {
+                    const sessionId = parseInt(this.getAttribute('data-id'));
+                    selectedSession = sessions.find(s => s.id === sessionId);
+                    openCancelModal();
+                });
+            });
+            
+            document.querySelectorAll('.join-session').forEach(button => {
+                button.addEventListener('click', function() {
+                    const sessionId = parseInt(this.getAttribute('data-id'));
+                    const session = sessions.find(s => s.id === sessionId);
+                    
+                    if (session.meeting_link) {
+                        window.open(session.meeting_link, '_blank');
+                    } else {
+                        alert('El enlace de la reunión no está disponible. Por favor, contacta con el otro participante.');
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.provide-feedback').forEach(button => {
+                button.addEventListener('click', function() {
+                    const sessionId = parseInt(this.getAttribute('data-id'));
+                    selectedSession = sessions.find(s => s.id === sessionId);
+                    openFeedbackModal();
+                });
+            });
+        }
+        
+        // Abrir modal de cancelación
+        function openCancelModal() {
+            document.getElementById('cancelModal').classList.add('active');
+        }
+        
+        // Cerrar modal de cancelación
+        function closeCancelModal() {
+            document.getElementById('cancelModal').classList.remove('active');
+        }
+        
+        // Cancelar sesión
+        async function cancelSession() {
+            try {
+                const response = await fetch(`http://localhost:8000/api/v1/sessions/${selectedSession.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        status: 'cancelled'
+                    })
+                });
+                
+                if (response.ok) {
+                    closeCancelModal();
+                    await loadSessions(); // Recargar sesiones
+                    alert('Sesión cancelada con éxito.');
+                } else {
+                    const error = await response.json();
+                    alert(`Error al cancelar la sesión: ${error.detail || 'Error desconocido'}`);
+                }
+            } catch (error) {
+                console.error('Error al cancelar sesión:', error);
+                alert('Error al cancelar la sesión. Por favor, inténtalo de nuevo más tarde.');
+            }
+        }
+        
+        // Abrir modal de feedback
+        function openFeedbackModal() {
+            document.getElementById('feedbackModal').classList.add('active');
+            
+            // Resetear formulario
+            document.querySelectorAll('input[name="rating"]').forEach(input => {
+                input.checked = false;
+            });
+            document.getElementById('feedbackComments').value = '';
+        }
+        
+        // Cerrar modal de feedback
+        function closeFeedbackModal() {
+            document.getElementById('feedbackModal').classList.remove('active');
+        }
+        
+        // Enviar feedback
+        async function submitFeedback() {
+            const ratingInput = document.querySelector('input[name="rating"]:checked');
+            
+            if (!ratingInput) {
+                alert('Por favor, selecciona una calificación.');
+                return;
+            }
+            
+            const rating = parseInt(ratingInput.value);
+            const comments = document.getElementById('feedbackComments').value;
+            
+            try {
+                const response = await fetch(`http://localhost:8000/api/v1/sessions/${selectedSession.id}/feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        session_id: selectedSession.id,
+                        rating: rating,
+                        comments: comments
+                    })
+                });
+                
+                if (response.ok) {
+                    closeFeedbackModal();
+                    await loadSessions(); // Recargar sesiones
+                    alert('Feedback enviado con éxito. ¡Gracias por tu evaluación!');
+                } else {
+                    const error = await response.json();
+                    alert(`Error al enviar feedback: ${error.detail || 'Error desconocido'}`);
+                }
+            } catch (error) {
+                console.error('Error al enviar feedback:', error);
+                alert('Error al enviar feedback. Por favor, inténtalo de nuevo más tarde.');
+            }
+        }
+        
+        // Event listeners para modales
+        document.getElementById('closeCancelModal').addEventListener('click', closeCancelModal);
+        document.getElementById('cancelCancelButton').addEventListener('click', closeCancelModal);
+        document.getElementById('confirmCancelButton').addEventListener('click', cancelSession);
+        
+        document.getElementById('closeFeedbackModal').addEventListener('click', closeFeedbackModal);
+        document.getElementById('cancelFeedbackButton').addEventListener('click', closeFeedbackModal);
+        document.getElementById('submitFeedbackButton').addEventListener('click', submitFeedback);
+        
+        // Cargar datos al iniciar
+        window.addEventListener('DOMContentLoaded', function() {
+            loadSessions();
+        });
+    </script>
+</body>
+</html>
