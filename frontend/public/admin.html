@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +9,10 @@
     <link rel="stylesheet" href="styles.css">
     <script src="admin_user_role_fix.js"></script>
     <script src="admin_calendar_fix.js"></script>
+    <script src="admin_edit_functions.js" defer></script>
+    <script src="admin_mentors_fix.js" defer></script>
+    <script src="admin_skills_management.js" defer></script>
+    <style>
     <style>
         body {
             margin: 0;
@@ -739,7 +742,10 @@
                             <div id="mentorSkillsContainer">
                                 <!-- Las habilidades se cargarán dinámicamente -->
                             </div>
-                            <button type="button" class="btn btn-secondary" id="addSkillBtn">Añadir Habilidad</button>
+                            <div style="display: flex; margin-top: 10px;">
+                                <input type="text" id="newSkillInput" class="form-control" placeholder="Nueva habilidad" style="margin-right: 10px;">
+                                <button type="button" class="btn btn-secondary" id="addSkillBtn">Añadir Habilidad</button>
+                            </div>
                         </div>
                     </div>
 
@@ -766,7 +772,10 @@
                             <div id="menteeInterestsContainer">
                                 <!-- Los intereses se cargarán dinámicamente -->
                             </div>
-                            <button type="button" class="btn btn-secondary" id="addInterestBtn">Añadir Interés</button>
+                            <div style="display: flex; margin-top: 10px;">
+                                <input type="text" id="newInterestInput" class="form-control" placeholder="Nuevo interés" style="margin-right: 10px;">
+                                <button type="button" class="btn btn-secondary" id="addInterestBtn">Añadir Interés</button>
+                            </div>
                         </div>
                     </div>
                 </form>
