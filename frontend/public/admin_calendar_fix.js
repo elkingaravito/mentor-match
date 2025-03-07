@@ -1,10 +1,17 @@
-// Función corregida para verificar la integración con Google Calendar del mentor seleccionado
-async function checkMentorCalendarIntegration() {
-    const mentorId = document.getElementById('sessionMentor').value;
-    if (!mentorId) return;
+/**
+ * Funciones para la integración con Google Calendar
+ * Este archivo contiene las funciones necesarias para manejar la integración
+ * con Google Calendar para las sesiones de mentoría.
+ */
 
+/**
+ * Verifica si un mentor tiene integración con Google Calendar
+ * @param {number} mentorId - ID del mentor a verificar
+ * @returns {Promise<boolean>} - Promesa que resuelve a true si el mentor tiene integración, false en caso contrario
+ */
+async function hasMentorCalendarIntegration(mentorId) {
     try {
-        // Usar el endpoint de usuarios para obtener la información del mentor
+        const token = localStorage.getItem('token');
         const response = await fetch(`http://localhost:8000/api/v1/users/${mentorId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -12,67 +19,115 @@ async function checkMentorCalendarIntegration() {
         });
 
         if (response.ok) {
-            const userData = await response.json();
-            // Verificar si el usuario tiene un perfil de mentor y si tiene integración con el calendario
-            if (!userData.mentor || !userData.mentor.calendar_integration) {
-                const warningElement = document.createElement('div');
-                warningElement.id = 'calendarIntegrationWarning';
-                warningElement.style.color = '#f44336';
-                warningElement.style.marginTop = '10px';
-                warningElement.innerHTML = `
-                    <div style="display: flex; align-items: center;">
-                        <span class="material-icons" style="margin-right: 5px;">warning</span>
-                        <span>El mentor seleccionado no tiene integración con Google Calendar. Las invitaciones no se enviarán automáticamente.</span>
-                    </div>
-                    <button type="button" class="btn btn-secondary" style="margin-top: 5px;" onclick="setupCalendarIntegration(${mentorId})">
-                        Configurar integración
-                    </button>
-                `;
-                
-                // Eliminar advertencia existente si hay una
-                const existingWarning = document.getElementById('calendarIntegrationWarning');
-                if (existingWarning) {
-                    existingWarning.remove();
-                }
-                
-                // Añadir la nueva advertencia después del selector de mentor
-                const mentorSelect = document.getElementById('sessionMentor');
-                mentorSelect.parentNode.appendChild(warningElement);
-            } else {
-                // Si tiene integración, eliminar cualquier advertencia existente
-                const existingWarning = document.getElementById('calendarIntegrationWarning');
-                if (existingWarning) {
-                    existingWarning.remove();
-                }
-            }
-        } else {
-            console.error('Error al verificar la integración con el calendario:', await response.text());
+            const data = await response.json();
+            return data.mentor && data.mentor.calendar_integration;
         }
+        
+        return false;
     } catch (error) {
-        console.error('Error al verificar la integración con el calendario:', error);
+        console.error('Error al verificar integración con Google Calendar:', error);
+        return false;
     }
 }
 
-// Función para configurar la integración con Google Calendar
-window.setupCalendarIntegration = async function(mentorId) {
+/**
+ * Crea un evento en Google Calendar para una sesión
+ * @param {Object} sessionData - Datos de la sesión
+ * @returns {Promise<Object>} - Promesa que resuelve a la respuesta del servidor
+ */
+async function createCalendarEvent(sessionData) {
     try {
-        const response = await fetch(`http://localhost:8000/api/v1/calendar/auth-url`, {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:8000/api/v1/calendar/events`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                mentor_id: sessionData.mentor_id,
+                mentee_id: sessionData.mentee_id,
+                session_id: sessionData.id,
+                start_time: sessionData.start_time,
+                end_time: sessionData.end_time,
+                title: `Sesión de Mentoría: ${sessionData.mentor_name} y ${sessionData.mentee_name}`,
+                description: sessionData.notes || 'Sesión de mentoría a través de Mentor Match'
+            })
+        });
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error al crear evento en Google Calendar:', error);
+        throw error;
+    }
+}
+
+/**
+ * Actualiza un evento en Google Calendar para una sesión
+ * @param {Object} sessionData - Datos de la sesión
+ * @returns {Promise<Object>} - Promesa que resuelve a la respuesta del servidor
+ */
+async function updateCalendarEvent(sessionData) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:8000/api/v1/calendar/events/${sessionData.calendar_event_id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                start_time: sessionData.start_time,
+                end_time: sessionData.end_time,
+                title: `Sesión de Mentoría: ${sessionData.mentor_name} y ${sessionData.mentee_name}`,
+                description: sessionData.notes || 'Sesión de mentoría a través de Mentor Match',
+                status: sessionData.status
+            })
+        });
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error al actualizar evento en Google Calendar:', error);
+        throw error;
+    }
+}
+
+/**
+ * Elimina un evento en Google Calendar para una sesión
+ * @param {string} eventId - ID del evento en Google Calendar
+ * @returns {Promise<boolean>} - Promesa que resuelve a true si se eliminó correctamente
+ */
+async function deleteCalendarEvent(eventId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:8000/api/v1/calendar/events/${eventId}`, {
+            method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
-        
-        if (response.ok) {
-            const data = await response.json();
-            // Guardar el ID del mentor en localStorage para usarlo después del callback
-            localStorage.setItem('pendingCalendarIntegrationMentorId', mentorId);
-            // Abrir la URL de autorización en una nueva ventana
-            window.open(data.auth_url, '_blank');
-        } else {
-            alert('Error al obtener la URL de autorización de Google Calendar');
-        }
+
+        return response.ok;
     } catch (error) {
-        console.error('Error al configurar la integración con Google Calendar:', error);
-        alert('Error al configurar la integración con Google Calendar');
+        console.error('Error al eliminar evento en Google Calendar:', error);
+        return false;
     }
-};
+}
+
+/**
+ * Inicia el proceso de autorización para integrar Google Calendar
+ * @param {number} mentorId - ID del mentor
+ */
+function startCalendarIntegration(mentorId) {
+    const token = localStorage.getItem('token');
+    const redirectUri = encodeURIComponent(window.location.origin + '/admin_calendar_callback.html');
+    
+    window.location.href = `http://localhost:8000/api/v1/calendar/auth?mentor_id=${mentorId}&token=${token}&redirect_uri=${redirectUri}`;
+}
+
+// Exportar funciones globalmente
+window.hasMentorCalendarIntegration = hasMentorCalendarIntegration;
+window.createCalendarEvent = createCalendarEvent;
+window.updateCalendarEvent = updateCalendarEvent;
+window.deleteCalendarEvent = deleteCalendarEvent;
+window.startCalendarIntegration = startCalendarIntegration;

@@ -1,294 +1,178 @@
-// Función para manejar correctamente el cambio de rol de usuario
-async function handleUserRoleChange(userId, newRole, userData) {
+/**
+ * Funciones para la gestión de usuarios en el panel de administración
+ * Este archivo contiene las funciones necesarias para editar, guardar y eliminar usuarios,
+ * así como para manejar la integración con Google Calendar.
+ */
+
+// Función para editar usuario con cambio de rol
+window.editUserWithRoleChange = async function(id) {
     try {
-        // 1. Primero actualizar el rol del usuario
-        const userUpdateResponse = await fetch(`http://localhost:8000/api/v1/users/${userId}`, {
-            method: 'PUT',
+        // Obtener información del usuario
+        const response = await fetch(`http://localhost:8000/api/v1/users/${id}`, {
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ role: newRole })
-        });
-
-        if (!userUpdateResponse.ok) {
-            const error = await userUpdateResponse.json();
-            throw new Error(`Error al actualizar el rol del usuario: ${error.detail || 'Error desconocido'}`);
-        }
-
-        const updatedUser = await userUpdateResponse.json();
-
-        // 2. Luego crear el perfil correspondiente según el nuevo rol
-        if (newRole === 'mentor') {
-            const mentorData = {
-                bio: userData.bio || '',
-                experience_years: userData.experience_years || 0,
-                company: userData.company || '',
-                position: userData.position || '',
-                linkedin_url: userData.linkedin_url || ''
-            };
-
-            // Intentar crear un nuevo perfil de mentor
-            const mentorResponse = await fetch(`http://localhost:8000/api/v1/users/${userId}/mentor`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(mentorData)
-            });
-
-            if (!mentorResponse.ok) {
-                const error = await mentorResponse.json();
-                console.warn(`No se pudo crear el perfil de mentor: ${error.detail}`);
-                
-                // Si el perfil ya existe, intentar actualizarlo
-                if (error.detail === "Mentor profile already exists") {
-                    const updateResponse = await fetch(`http://localhost:8000/api/v1/users/${userId}/mentor`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify(mentorData)
-                    });
-                    
-                    if (!updateResponse.ok) {
-                        const updateError = await updateResponse.json();
-                        throw new Error(`Error al actualizar el perfil de mentor: ${updateError.detail || 'Error desconocido'}`);
-                    }
-                }
-            }
-        } else if (newRole === 'mentee') {
-            const menteeData = {
-                bio: userData.bio || '',
-                goals: userData.goals || '',
-                current_position: userData.current_position || '',
-                linkedin_url: userData.linkedin_url || ''
-            };
-
-            // Intentar crear un nuevo perfil de mentil
-            const menteeResponse = await fetch(`http://localhost:8000/api/v1/users/${userId}/mentee`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(menteeData)
-            });
-
-            if (!menteeResponse.ok) {
-                const error = await menteeResponse.json();
-                console.warn(`No se pudo crear el perfil de mentil: ${error.detail}`);
-                
-                // Si el perfil ya existe, intentar actualizarlo
-                if (error.detail === "Mentee profile already exists") {
-                    const updateResponse = await fetch(`http://localhost:8000/api/v1/users/${userId}/mentee`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify(menteeData)
-                    });
-                    
-                    if (!updateResponse.ok) {
-                        const updateError = await updateResponse.json();
-                        throw new Error(`Error al actualizar el perfil de mentil: ${updateError.detail || 'Error desconocido'}`);
-                    }
-                }
-            }
-        }
-
-        return updatedUser;
-    } catch (error) {
-        console.error('Error al cambiar el rol del usuario:', error);
-        throw error;
-    }
-}
-
-// Función para editar usuario con manejo de cambio de rol
-window.editUserWithRoleChange = async function(userId) {
-    try {
-        // Obtener datos del usuario
-        const response = await fetch(`http://localhost:8000/api/v1/users/${userId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
         });
 
         if (response.ok) {
             const user = await response.json();
-            
-            // Configurar el modal para editar usuario
-            document.getElementById('userModalTitle').textContent = 'Editar Usuario';
+
+            // Configurar el modal para edición
+            document.getElementById('userModalTitle').textContent = `Editar ${user.role === 'mentor' ? 'Mentor' : user.role === 'mentee' ? 'Mentil' : 'Usuario'}`;
             document.getElementById('userId').value = user.id;
             document.getElementById('userNameInput').value = user.name;
             document.getElementById('userEmail').value = user.email;
-            document.getElementById('userPassword').value = ''; // No mostrar contraseña
+            document.getElementById('userPassword').value = '';
             document.getElementById('userRoleSelect').value = user.role;
-            
-            // Mostrar campos según el rol
+
+            // Mostrar campos específicos según el rol
             document.getElementById('mentorFields').style.display = user.role === 'mentor' ? 'block' : 'none';
             document.getElementById('menteeFields').style.display = user.role === 'mentee' ? 'block' : 'none';
-            
-            // Llenar campos de mentor si existe
-            if (user.mentor) {
+
+            // Llenar campos de mentor si existen
+            if (user.role === 'mentor' && user.mentor) {
                 document.getElementById('mentorBio').value = user.mentor.bio || '';
                 document.getElementById('mentorExperience').value = user.mentor.experience_years || '';
                 document.getElementById('mentorCompany').value = user.mentor.company || '';
                 document.getElementById('mentorPosition').value = user.mentor.position || '';
                 document.getElementById('mentorLinkedin').value = user.mentor.linkedin_url || '';
+
+                // Cargar habilidades del mentor
+                try {
+                    const skillsResponse = await fetch(`http://localhost:8000/api/v1/skills/mentor/${id}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
+
+                    if (skillsResponse.ok) {
+                        const skills = await skillsResponse.json();
+                        const skillsContainer = document.getElementById('mentorSkillsContainer');
+
+                        // Limpiar contenedor de habilidades
+                        skillsContainer.innerHTML = '';
+
+                        // Añadir habilidades existentes
+                        if (skills && skills.length > 0) {
+                            for (const skill of skills) {
+                                skillsContainer.innerHTML += `
+                                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                        <input type="text" class="form-control" value="${skill.skill.name}" readonly style="margin-right: 10px;">
+                                        <select class="form-select" style="width: 150px; margin-right: 10px;">
+                                            <option value="1" ${skill.proficiency_level === 1 ? 'selected' : ''}>Básico</option>
+                                            <option value="2" ${skill.proficiency_level === 2 ? 'selected' : ''}>Intermedio</option>
+                                            <option value="3" ${skill.proficiency_level === 3 ? 'selected' : ''}>Avanzado</option>
+                                            <option value="4" ${skill.proficiency_level === 4 ? 'selected' : ''}>Experto</option>
+                                            <option value="5" ${skill.proficiency_level === 5 ? 'selected' : ''}>Maestro</option>
+                                        </select>
+                                        <button type="button" class="btn btn-secondary" onclick="this.parentElement.remove()">Eliminar</button>
+                                    </div>
+                                `;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error al cargar habilidades del mentor:', error);
+                }
             }
-            
-            // Llenar campos de mentil si existe
-            if (user.mentee) {
+
+            // Llenar campos de mentil si existen
+            if (user.role === 'mentee' && user.mentee) {
                 document.getElementById('menteeBio').value = user.mentee.bio || '';
                 document.getElementById('menteeGoals').value = user.mentee.goals || '';
                 document.getElementById('menteePosition').value = user.mentee.current_position || '';
                 document.getElementById('menteeLinkedin').value = user.mentee.linkedin_url || '';
+
+                // Cargar intereses del mentil
+                try {
+                    const interestsResponse = await fetch(`http://localhost:8000/api/v1/skills/mentee/${id}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
+
+                    if (interestsResponse.ok) {
+                        const interests = await interestsResponse.json();
+                        const interestsContainer = document.getElementById('menteeInterestsContainer');
+
+                        // Limpiar contenedor de intereses
+                        interestsContainer.innerHTML = '';
+
+                        // Añadir intereses existentes
+                        if (interests && interests.length > 0) {
+                            for (const interest of interests) {
+                                interestsContainer.innerHTML += `
+                                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                        <input type="text" class="form-control" value="${interest.skill.name}" readonly style="margin-right: 10px;">
+                                        <select class="form-select" style="width: 150px; margin-right: 10px;">
+                                            <option value="1" ${interest.interest_level === 1 ? 'selected' : ''}>Bajo</option>
+                                            <option value="2" ${interest.interest_level === 2 ? 'selected' : ''}>Medio-Bajo</option>
+                                            <option value="3" ${interest.interest_level === 3 ? 'selected' : ''}>Medio</option>
+                                            <option value="4" ${interest.interest_level === 4 ? 'selected' : ''}>Medio-Alto</option>
+                                            <option value="5" ${interest.interest_level === 5 ? 'selected' : ''}>Alto</option>
+                                        </select>
+                                        <button type="button" class="btn btn-secondary" onclick="this.parentElement.remove()">Eliminar</button>
+                                    </div>
+                                `;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error al cargar intereses del mentil:', error);
+                }
             }
-            
+
+            // Abrir el modal
             openModal('userModal');
-        } else {
-            alert('Error al cargar datos del usuario');
         }
     } catch (error) {
-        console.error('Error al editar usuario:', error);
-        alert('Error al editar usuario');
+        console.error('Error al cargar información del usuario:', error);
+        alert('Error al cargar información del usuario. Por favor, inténtelo de nuevo.');
     }
 };
 
-// Función para guardar usuario con manejo de cambio de rol
+// Función para guardar usuario con cambio de rol
 window.saveUserWithRoleChange = async function() {
     const userId = document.getElementById('userId').value;
     const name = document.getElementById('userNameInput').value;
     const email = document.getElementById('userEmail').value;
     const password = document.getElementById('userPassword').value;
     const role = document.getElementById('userRoleSelect').value;
-    
+
     if (!name || !email || (!userId && !password) || !role) {
-        alert('Por favor, complete todos los campos obligatorios');
+        alert('Por favor, complete todos los campos obligatorios.');
         return;
     }
-    
+
+    // Crear objeto de datos del usuario
+    const userData = {
+        name: name,
+        email: email,
+        role: role
+    };
+
+    // Añadir contraseña solo si se proporciona
+    if (password) {
+        userData.password = password;
+    }
+
     try {
-        // Datos básicos del usuario
-        const userData = {
-            name: name,
-            email: email
-        };
-        
-        if (password) {
-            userData.password = password;
-        }
-        
-        let user;
-        
+        let response;
+        const token = localStorage.getItem('token');
+
         if (userId) {
-            // Si estamos editando un usuario existente
-            const currentUserResponse = await fetch(`http://localhost:8000/api/v1/users/${userId}`, {
+            // Actualizar usuario existente
+            response = await fetch(`http://localhost:8000/api/v1/users/${userId}`, {
+                method: 'PUT',
                 headers: {
+                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
-                }
+                },
+                body: JSON.stringify(userData)
             });
-            
-            if (currentUserResponse.ok) {
-                const currentUser = await currentUserResponse.json();
-                
-                // Si el rol ha cambiado, manejar el cambio de rol
-                if (currentUser.role !== role) {
-                    // Recopilar datos de perfil según el nuevo rol
-                    let profileData = {};
-                    
-                    if (role === 'mentor') {
-                        profileData = {
-                            bio: document.getElementById('mentorBio').value,
-                            experience_years: parseInt(document.getElementById('mentorExperience').value) || 0,
-                            company: document.getElementById('mentorCompany').value,
-                            position: document.getElementById('mentorPosition').value,
-                            linkedin_url: document.getElementById('mentorLinkedin').value
-                        };
-                    } else if (role === 'mentee') {
-                        profileData = {
-                            bio: document.getElementById('menteeBio').value,
-                            goals: document.getElementById('menteeGoals').value,
-                            current_position: document.getElementById('menteePosition').value,
-                            linkedin_url: document.getElementById('menteeLinkedin').value
-                        };
-                    }
-                    
-                    // Manejar el cambio de rol
-                    user = await handleUserRoleChange(userId, role, profileData);
-                } else {
-                    // Si el rol no ha cambiado, actualizar datos básicos
-                    const response = await fetch(`http://localhost:8000/api/v1/users/${userId}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify(userData)
-                    });
-                    
-                    if (response.ok) {
-                        user = await response.json();
-                        
-                        // Actualizar perfil según el rol
-                        if (role === 'mentor') {
-                            const mentorData = {
-                                bio: document.getElementById('mentorBio').value,
-                                experience_years: parseInt(document.getElementById('mentorExperience').value) || 0,
-                                company: document.getElementById('mentorCompany').value,
-                                position: document.getElementById('mentorPosition').value,
-                                linkedin_url: document.getElementById('mentorLinkedin').value
-                            };
-                            
-                            const mentorResponse = await fetch(`http://localhost:8000/api/v1/users/${userId}/mentor`, {
-                                method: 'PUT',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
-                                },
-                                body: JSON.stringify(mentorData)
-                            });
-                            
-                            if (!mentorResponse.ok) {
-                                console.error('Error al actualizar perfil de mentor:', await mentorResponse.json());
-                            }
-                        } else if (role === 'mentee') {
-                            const menteeData = {
-                                bio: document.getElementById('menteeBio').value,
-                                goals: document.getElementById('menteeGoals').value,
-                                current_position: document.getElementById('menteePosition').value,
-                                linkedin_url: document.getElementById('menteeLinkedin').value
-                            };
-                            
-                            const menteeResponse = await fetch(`http://localhost:8000/api/v1/users/${userId}/mentee`, {
-                                method: 'PUT',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
-                                },
-                                body: JSON.stringify(menteeData)
-                            });
-                            
-                            if (!menteeResponse.ok) {
-                                console.error('Error al actualizar perfil de mentil:', await menteeResponse.json());
-                            }
-                        }
-                    } else {
-                        throw new Error('Error al actualizar usuario');
-                    }
-                }
-            } else {
-                throw new Error('Error al obtener información del usuario actual');
-            }
         } else {
-            // Si estamos creando un nuevo usuario
-            userData.role = role;
-            
-            const response = await fetch('http://localhost:8000/api/v1/users/', {
+            // Crear nuevo usuario
+            response = await fetch('http://localhost:8000/api/v1/users/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -296,71 +180,210 @@ window.saveUserWithRoleChange = async function() {
                 },
                 body: JSON.stringify({ ...userData, password: password })
             });
-            
-            if (response.ok) {
-                user = await response.json();
-                
-                // Crear perfil según el rol
-                if (role === 'mentor') {
-                    const mentorData = {
-                        bio: document.getElementById('mentorBio').value,
-                        experience_years: parseInt(document.getElementById('mentorExperience').value) || 0,
-                        company: document.getElementById('mentorCompany').value,
-                        position: document.getElementById('mentorPosition').value,
-                        linkedin_url: document.getElementById('mentorLinkedin').value
-                    };
-                    
-                    const mentorResponse = await fetch(`http://localhost:8000/api/v1/users/${user.id}/mentor`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify(mentorData)
-                    });
-                    
-                    if (!mentorResponse.ok) {
-                        console.error('Error al crear perfil de mentor:', await mentorResponse.json());
-                    }
-                } else if (role === 'mentee') {
-                    const menteeData = {
-                        bio: document.getElementById('menteeBio').value,
-                        goals: document.getElementById('menteeGoals').value,
-                        current_position: document.getElementById('menteePosition').value,
-                        linkedin_url: document.getElementById('menteeLinkedin').value
-                    };
-                    
-                    const menteeResponse = await fetch(`http://localhost:8000/api/v1/users/${user.id}/mentee`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify(menteeData)
-                    });
-                    
-                    if (!menteeResponse.ok) {
-                        console.error('Error al crear perfil de mentil:', await menteeResponse.json());
-                    }
-                }
-            } else {
-                throw new Error('Error al crear usuario');
-            }
         }
-        
-        closeModal('userModal');
-        alert('Usuario guardado correctamente');
-        
-        // Recargar datos
-        if (document.querySelector('.tab.active').getAttribute('data-tab') === 'mentors') {
-            loadMentors();
-        } else if (document.querySelector('.tab.active').getAttribute('data-tab') === 'mentees') {
-            loadMentees();
+
+        if (response.ok) {
+            const user = await response.json();
+
+            // Si es un mentor, actualizar perfil de mentor
+            if (role === 'mentor' && document.getElementById('mentorFields').style.display === 'block') {
+                const mentorData = {
+                    bio: document.getElementById('mentorBio').value,
+                    experience_years: parseInt(document.getElementById('mentorExperience').value) || 0,
+                    company: document.getElementById('mentorCompany').value,
+                    position: document.getElementById('mentorPosition').value,
+                    linkedin_url: document.getElementById('mentorLinkedin').value
+                };
+
+                const mentorResponse = await fetch(`http://localhost:8000/api/v1/users/${user.id}/mentor`, {
+                    method: userId ? 'PUT' : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(mentorData)
+                });
+
+                if (!mentorResponse.ok) {
+                    console.error('Error al guardar perfil de mentor:', await mentorResponse.json());
+                }
+            }
+
+            // Si es un mentil, actualizar perfil de mentil
+            if (role === 'mentee' && document.getElementById('menteeFields').style.display === 'block') {
+                const menteeData = {
+                    bio: document.getElementById('menteeBio').value,
+                    goals: document.getElementById('menteeGoals').value,
+                    current_position: document.getElementById('menteePosition').value,
+                    linkedin_url: document.getElementById('menteeLinkedin').value
+                };
+
+                const menteeResponse = await fetch(`http://localhost:8000/api/v1/users/${user.id}/mentee`, {
+                    method: userId ? 'PUT' : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(menteeData)
+                });
+
+                if (!menteeResponse.ok) {
+                    console.error('Error al guardar perfil de mentil:', await menteeResponse.json());
+                }
+            }
+
+            closeModal('userModal');
+            
+            // Recargar los datos
+            if (typeof loadMentors === 'function') loadMentors();
+            if (typeof loadMentees === 'function') loadMentees();
+            if (typeof loadDashboardData === 'function') loadDashboardData();
+            
+            alert(userId ? 'Usuario actualizado correctamente.' : 'Usuario creado correctamente.');
         } else {
-            loadDashboardData();
+            const error = await response.json();
+            alert(`Error: ${error.detail || 'No se pudo guardar el usuario.'}`);
         }
     } catch (error) {
-        console.error('Error al guardar usuario:', error);
-        alert(`Error al guardar usuario: ${error.message}`);
+        console.error('Error al guardar el usuario:', error);
+        alert('Error al guardar el usuario. Por favor, inténtelo de nuevo.');
     }
+};
+
+// Función para verificar la integración con Google Calendar del mentor seleccionado
+window.checkMentorCalendarIntegration = async function() {
+    const mentorId = document.getElementById('sessionMentor').value;
+    if (!mentorId) return;
+
+    try {
+        const response = await fetch(`http://localhost:8000/api/v1/users/${mentorId}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (!data.mentor || !data.mentor.calendar_integration) {
+                const warningElement = document.createElement('div');
+                warningElement.id = 'calendarIntegrationWarning';
+                warningElement.className = 'form-group';
+                warningElement.innerHTML = `
+                    <div style="display: flex; align-items: center; padding: 10px; background-color: #fff3cd; border-radius: 4px; margin-top: 5px;">
+                        <span class="material-icons" style="margin-right: 5px; color: #856404;">warning</span>
+                        <span style="color: #856404;">El mentor seleccionado no tiene integración con Google Calendar. Las invitaciones no se enviarán automáticamente.</span>
+                    </div>
+                    <button type="button" class="btn btn-secondary" style="margin-top: 5px;" onclick="setupCalendarIntegration(${mentorId})">
+                        Configurar integración
+                    </button>
+                `;
+
+                // Eliminar advertencia anterior si existe
+                const existingWarning = document.getElementById('calendarIntegrationWarning');
+                if (existingWarning) {
+                    existingWarning.remove();
+                }
+
+                // Agregar la advertencia después del selector de mentor
+                const mentorSelect = document.getElementById('sessionMentor');
+                mentorSelect.parentNode.appendChild(warningElement);
+            } else {
+                // Eliminar advertencia si existe
+                const existingWarning = document.getElementById('calendarIntegrationWarning');
+                if (existingWarning) {
+                    existingWarning.remove();
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error al verificar integración con Google Calendar:', error);
+    }
+};
+
+// Función para configurar la integración con Google Calendar
+window.setupCalendarIntegration = function(mentorId) {
+    // Redirigir a la página de configuración de Google Calendar
+    window.location.href = `admin_calendar_setup.html?mentorId=${mentorId}`;
+};
+
+// Función para eliminar un mentor
+window.deleteMentor = async function(id) {
+    if (confirm('¿Está seguro de que desea eliminar este mentor?')) {
+        try {
+            const response = await fetch(`http://localhost:8000/api/v1/users/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (response.ok) {
+                if (typeof loadMentors === 'function') loadMentors();
+                if (typeof loadDashboardData === 'function') loadDashboardData();
+                alert('Mentor eliminado correctamente.');
+            } else {
+                const error = await response.json();
+                alert(`Error: ${error.detail || 'No se pudo eliminar el mentor.'}`);
+            }
+        } catch (error) {
+            console.error('Error al eliminar el mentor:', error);
+            alert('Error al eliminar el mentor. Por favor, inténtelo de nuevo.');
+        }
+    }
+};
+
+// Función para eliminar un mentil
+window.deleteMentee = async function(id) {
+    if (confirm('¿Está seguro de que desea eliminar este mentil?')) {
+        try {
+            const response = await fetch(`http://localhost:8000/api/v1/users/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (response.ok) {
+                if (typeof loadMentees === 'function') loadMentees();
+                if (typeof loadDashboardData === 'function') loadDashboardData();
+                alert('Mentil eliminado correctamente.');
+            } else {
+                const error = await response.json();
+                alert(`Error: ${error.detail || 'No se pudo eliminar el mentil.'}`);
+            }
+        } catch (error) {
+            console.error('Error al eliminar el mentil:', error);
+            alert('Error al eliminar el mentil. Por favor, inténtelo de nuevo.');
+        }
+    }
+};
+
+// Función para eliminar un usuario general
+window.deleteUser = async function(id) {
+    if (confirm('¿Está seguro de que desea eliminar este usuario?')) {
+        try {
+            const response = await fetch(`http://localhost:8000/api/v1/users/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (response.ok) {
+                if (typeof loadMentors === 'function') loadMentors();
+                if (typeof loadMentees === 'function') loadMentees();
+                if (typeof loadDashboardData === 'function') loadDashboardData();
+                alert('Usuario eliminado correctamente.');
+            } else {
+                const error = await response.json();
+                alert(`Error: ${error.detail || 'No se pudo eliminar el usuario.'}`);
+            }
+        } catch (error) {
+            console.error('Error al eliminar el usuario:', error);
+            alert('Error al eliminar el usuario. Por favor, inténtelo de nuevo.');
+        }
+    }
+};
+window.editMentor = function(id) {
+    editUserWithRoleChange(id);
 };
