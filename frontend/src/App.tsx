@@ -19,6 +19,7 @@ import MatchmakingPage from './pages/MatchmakingPage';
 import CalendarPage from './pages/CalendarPage';
 import StatisticsPage from './pages/StatisticsPage';
 import NotificationsPage from './pages/NotificationsPage';
+import NotificationSettingsPage from './pages/NotificationSettingsPage';
 import NotFound from './pages/NotFound';
 
 const App: React.FC = () => {
@@ -44,6 +45,7 @@ const App: React.FC = () => {
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/statistics" element={<StatisticsPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/notifications/settings" element={<NotificationSettingsPage />} />
           </Route>
           
           <Route path="*" element={<NotFound />} />

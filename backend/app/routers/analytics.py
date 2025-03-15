@@ -1,40 +1,52 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from app.services.export_service import ExportService
+from sqlalchemy.orm import Session
 from typing import Optional
+from datetime import datetime
+from app.core.database import get_db
+from app.core.security import get_current_user, get_current_admin_user
+from app.services.analytics_service import AnalyticsService
+from app.models.user import User
 
-# ... (existing imports and endpoints)
+router = APIRouter()
 
-@router.get("/export")
-async def export_analytics(
-    format: str = Query(..., regex="^(csv|excel|pdf)$"),
+@router.get("/platform-metrics")
+async def get_platform_metrics(
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
-    industry: Optional[str] = None,
-    mentoring_style: Optional[str] = None,
-    goal_category: Optional[str] = None,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
 ):
-    """Export analytics data in specified format"""
-    export_service = ExportService(db)
+    """Obtiene métricas generales de la plataforma (solo admin)."""
+    analytics_service = AnalyticsService(db)
+    return analytics_service.get_platform_metrics(start_date, end_date)
+
+@router.get("/user-engagement/{user_id}")
+async def get_user_engagement(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Obtiene métricas de engagement para un usuario."""
+    if current_user.id != user_id and not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized")
     
-    filters = {
-        "start_date": start_date,
-        "end_date": end_date,
-        "industry": industry,
-        "mentoring_style": mentoring_style,
-        "goal_category": goal_category
-    }
-    
-    try:
-        if format == "csv":
-            return export_service.export_to_csv(filters)
-        elif format == "excel":
-            return export_service.export_to_excel(filters)
-        elif format == "pdf":
-            return export_service.export_to_pdf(filters)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to export data: {str(e)}"
-        )
+    analytics_service = AnalyticsService(db)
+    return analytics_service.get_user_engagement_metrics(user_id)
+
+@router.get("/trending-topics")
+async def get_trending_topics(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Obtiene los temas más populares en las mentorías."""
+    analytics_service = AnalyticsService(db)
+    return analytics_service.get_trending_topics()
+
+@router.get("/success-factors")
+async def get_success_factors(
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Analiza factores que contribuyen al éxito de las mentorías (solo admin)."""
+    analytics_service = AnalyticsService(db)
+    return analytics_service.get_success_factors()

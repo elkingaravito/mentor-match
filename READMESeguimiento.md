@@ -89,3 +89,9 @@ pkill -f "python serve.py"
 
 # Para detener el backend
 pkill -f "uvicorn app.main:app"
+
+
+cd /Users/apple/Workspace/mentor-match/backend && source ../.venv/bin/activate && uvicorn app.main:app --reload &
+
+cd /Users/apple/Workspace/mentor-match/frontend && python3 serve.py &
+

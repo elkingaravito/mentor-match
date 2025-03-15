@@ -1,119 +1,72 @@
-from typing import Any, List, Dict
-from typing import Any, List
-
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-
-from app import schemas
+from typing import List, Optional
 from app.core.database import get_db
-from app.models import Notification, User
+from app.core.security import get_current_user
+from app.services.notification_service import NotificationService
+from app.schemas.notification import NotificationResponse, NotificationCreate
+from app.models.user import User
 
 router = APIRouter()
 
-@router.get("/user/{user_id}", response_model=List[schemas.Notification])
-def read_user_notifications(
-    user_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
-) -> Any:
-    """
-    Retrieve notifications for a user.
-    """
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-    
-    notifications = db.query(Notification).filter(
-        Notification.user_id == user_id
-    ).order_by(
-        Notification.created_at.desc()
-    ).offset(skip).limit(limit).all()
-    
-    return notifications
+@router.get("/", response_model=List[NotificationResponse])
+async def get_notifications(
+    unread_only: bool = False,
+    limit: int = Query(50, le=100),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Obtiene las notificaciones del usuario."""
+    notification_service = NotificationService(db)
+    return await notification_service.get_user_notifications(
+        user_id=current_user.id,
+        unread_only=unread_only,
+        limit=limit
+    )
 
-@router.post("/", response_model=schemas.Notification)
-def create_notification(
-    notification_in: schemas.NotificationCreate, db: Session = Depends(get_db)
-) -> Any:
-    """
-    Create a new notification.
-    """
-    user = db.query(User).filter(User.id == notification_in.user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-    
-    notification = Notification(**notification_in.dict())
-    db.add(notification)
-    db.commit()
-    db.refresh(notification)
-    return notification
-
-@router.put("/{notification_id}", response_model=schemas.Notification)
-def update_notification(
-    notification_id: int, notification_in: schemas.NotificationUpdate, db: Session = Depends(get_db)
-) -> Any:
-    """
-    Update a notification.
-    """
-    notification = db.query(Notification).filter(Notification.id == notification_id).first()
+@router.post("/{notification_id}/read")
+async def mark_as_read(
+    notification_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Marca una notificación como leída."""
+    notification_service = NotificationService(db)
+    notification = await notification_service.mark_as_read(
+        notification_id=notification_id,
+        user_id=current_user.id
+    )
     if not notification:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Notification not found",
-        )
-    
-    update_data = notification_in.dict(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(notification, field, value)
-    
-    db.commit()
-    db.refresh(notification)
-    return notification
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return {"status": "success"}
 
-@router.delete("/{notification_id}", response_model=schemas.Notification)
-def delete_notification(
-    notification_id: int, db: Session = Depends(get_db)
-) -> Any:
-    """
-    Delete a notification.
-    """
-    notification = db.query(Notification).filter(Notification.id == notification_id).first()
-    if not notification:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Notification not found",
-        )
-    
-    db.delete(notification)
-    db.commit()
-    return notification
+@router.delete("/{notification_id}")
+async def delete_notification(
+    notification_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Elimina una notificación."""
+    notification_service = NotificationService(db)
+    success = await notification_service.delete_notification(
+        notification_id=notification_id,
+        user_id=current_user.id
+    )
+    if not success:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return {"status": "success"}
 
-@router.put("/user/{user_id}/mark-all-read", response_model=dict)
-def mark_all_notifications_read(
-    user_id: int, db: Session = Depends(get_db)
-) -> Any:
-    """
-    Mark all notifications as read for a user.
-    """
-    user = db.query(User).filter(User.id == user_id).first()
+@router.post("/settings")
+async def update_notification_settings(
+    settings: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Actualiza las preferencias de notificación del usuario."""
+    user = db.query(User).filter(User.id == current_user.id).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
+        raise HTTPException(status_code=404, detail="User not found")
     
-    notifications = db.query(Notification).filter(
-        Notification.user_id == user_id,
-        Notification.read == False
-    ).all()
-    
-    for notification in notifications:
-        notification.read = True
-    
+    user.notification_settings = settings
     db.commit()
-    
-    return {"marked_read": len(notifications)}
+    return {"status": "success"}

@@ -1,49 +1,29 @@
-import React from 'react';
-import {
-  Box,
-  Typography,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Avatar,
-  CircularProgress,
-} from '@mui/material';
-import { useAuth } from '../context/AuthContext';
-import { useGetUserNotificationsQuery } from '../services/api';
+import React from "react";
+import { Container, Box, Typography, Button } from "@mui/material";
+import { Settings as SettingsIcon } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import { NotificationCenter } from "../components/notifications/NotificationCenter";
 
 const NotificationsPage: React.FC = () => {
-  const { user } = useAuth();
-  const { data: notifications, isLoading } = useGetUserNotificationsQuery(user?.id || 0, {
-    skip: !user,
-  });
+    const navigate = useNavigate();
 
-  return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Notificaciones
-      </Typography>
-      {isLoading ? (
-        <CircularProgress />
-      ) : notifications && notifications.length > 0 ? (
-        <List>
-          {notifications.map((notification) => (
-            <ListItem key={notification.id}>
-              <ListItemAvatar>
-                <Avatar>{notification.type.charAt(0)}</Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={notification.type}
-                secondary={notification.message}
-              />
-            </ListItem>
-          ))}
-        </List>
-      ) : (
-        <Typography>No hay notificaciones nuevas.</Typography>
-      )}
-    </Box>
-  );
+    return (
+        <Container maxWidth="lg">
+            <Box mb={4}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                    <Typography variant="h4">Notificaciones</Typography>
+                    <Button
+                        variant="outlined"
+                        startIcon={<SettingsIcon />}
+                        onClick={() => navigate("/notifications/settings")}
+                    >
+                        Configuración
+                    </Button>
+                </Box>
+                <NotificationCenter />
+            </Box>
+        </Container>
+    );
 };
 
 export default NotificationsPage;

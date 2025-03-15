@@ -1,118 +1,91 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import MatchRecommendations from '../MatchRecommendations';
-import { MentorMatch, UserProfile, Expertise, Availability } from '../../../types/matching';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MatchRecommendations } from '../MatchRecommendations';
+import { AuthProvider } from '../../../context/AuthContext';
+import { MemoryRouter } from 'react-router-dom';
+import { server } from '../../../mocks/server';
+import { rest } from 'msw';
 
-const mockExpertise: Expertise[] = [
-    { id: '1', name: 'React', level: 'expert' },
-    { id: '2', name: 'TypeScript', level: 'intermediate' }
-];
-
-const mockAvailability: Availability[] = [
-    {
-        id: '1',
-        dayOfWeek: 1,
-        startTime: '09:00',
-        endTime: '17:00',
-        timeZone: 'UTC'
-    }
-];
-
-const mockMentor: UserProfile = {
-    id: '1',
-    name: 'John Doe',
-    email: 'john@example.com',
-    role: 'mentor',
-    expertise: mockExpertise,
-    availability: mockAvailability,
-    bio: 'Experienced developer',
-    profilePicture: 'https://example.com/photo.jpg'
-};
-
-const mockMentee: UserProfile = {
-    id: '2',
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    role: 'mentee',
-    expertise: mockExpertise,
-    availability: mockAvailability,
-    bio: 'Aspiring developer'
-};
-
-const mockMatch: MentorMatch = {
-    mentor: mockMentor,
-    mentee: mockMentee,
-    matchScore: {
-        score: 0.85,
-        compatibilityFactors: {
-            expertiseMatch: 0.9,
-            availabilityMatch: 0.8,
-            overallFit: 0.85
-        }
-    },
-    availableSlots: mockAvailability
-};
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <MemoryRouter>
+        <AuthProvider>{children}</AuthProvider>
+    </MemoryRouter>
+);
 
 describe('MatchRecommendations', () => {
-    const mockOnMatchSelect = jest.fn();
-    const mockOnScheduleMeeting = jest.fn();
-
-    beforeEach(() => {
-        jest.clearAllMocks();
+    it('should render loading state', () => {
+        render(<MatchRecommendations />, { wrapper });
+        expect(screen.getByRole('progressbar')).toBeInTheDocument();
     });
 
-    it('renders loading state correctly', () => {
-        render(
-            <MatchRecommendations
-                mentorMatches={[]}
-                isLoading={true}
-                onMatchSelect={mockOnMatchSelect}
-                onScheduleMeeting={mockOnScheduleMeeting}
-            />
-        );
+    it('should render match suggestions', async () => {
+        render(<MatchRecommendations />, { wrapper });
 
-        expect(screen.getAllByTestId('skeleton')).toHaveLength(3);
+        await waitFor(() => {
+            expect(screen.getByText('Match Score: 85.0%')).toBeInTheDocument();
+        });
+
+        expect(screen.getByText('Python')).toBeInTheDocument();
+        expect(screen.getByText('React')).toBeInTheDocument();
+        expect(screen.getByText('TypeScript')).toBeInTheDocument();
     });
 
-    it('renders empty state when no matches', () => {
-        render(
-            <MatchRecommendations
-                mentorMatches={[]}
-                isLoading={false}
-                onMatchSelect={mockOnMatchSelect}
-                onScheduleMeeting={mockOnScheduleMeeting}
-            />
-        );
+    it('should handle accept match', async () => {
+        render(<MatchRecommendations />, { wrapper });
 
-        expect(screen.getByText('No mentor matches found')).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByText('Accept')).toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByText('Accept'));
+
+        await waitFor(() => {
+            // Verify that the accept API was called
+            // This could be done by checking if the component re-renders with updated data
+            expect(screen.queryByText('Match Score: 85.0%')).not.toBeInTheDocument();
+        });
     });
 
-    it('renders mentor matches correctly', () => {
-        render(
-            <MatchRecommendations
-                mentorMatches={[mockMatch]}
-                isLoading={false}
-                onMatchSelect={mockOnMatchSelect}
-                onScheduleMeeting={mockOnScheduleMeeting}
-            />
-        );
+    it('should handle reject match', async () => {
+        render(<MatchRecommendations />, { wrapper });
 
-        expect(screen.getByText('John Doe')).toBeInTheDocument();
-        expect(screen.getByText('85% Match')).toBeInTheDocument();
-        expect(screen.getByText('React (expert)')).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByText('Decline')).toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByText('Decline'));
+
+        await waitFor(() => {
+            // Verify that the reject API was called
+            expect(screen.queryByText('Match Score: 85.0%')).not.toBeInTheDocument();
+        });
     });
 
-    it('calls onMatchSelect when View Profile is clicked', () => {
-        render(
-            <MatchRecommendations
-                mentorMatches={[mockMatch]}
-                isLoading={false}
-                onMatchSelect={mockOnMatchSelect}
-                onScheduleMeeting={mockOnScheduleMeeting}
-            />
+    it('should handle error state', async () => {
+        server.use(
+            rest.get('*/api/matching/suggestions', (req, res, ctx) => {
+                return res(ctx.status(500), ctx.json({ message: 'Server error' }));
+            })
         );
 
-        fireEvent.click(screen.getByText('View Profile'));
-        expect(mockOnMatchSelect).toHaveBeenCalledWith(mockMatch);
+        render(<MatchRecommendations />, { wrapper });
+
+        await waitFor(() => {
+            expect(screen.getByRole('alert')).toBeInTheDocument();
+        });
+    });
+
+    it('should handle empty suggestions', async () => {
+        server.use(
+            rest.get('*/api/matching/suggestions', (req, res, ctx) => {
+                return res(ctx.json([]));
+            })
+        );
+
+        render(<MatchRecommendations />, { wrapper });
+
+        await waitFor(() => {
+            expect(screen.getByText('No matching suggestions available at the moment.')).toBeInTheDocument();
+        });
     });
 });
