@@ -45,7 +45,7 @@ class MatchScore(MatchScoreBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # Actualizado de orm_mode a from_attributes
 
 class MatchFeedbackBase(BaseModel):
     rating: int
@@ -62,4 +62,4 @@ class MatchFeedback(MatchFeedbackBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # Actualizado de orm_mode a from_attributes

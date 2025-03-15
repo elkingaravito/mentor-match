@@ -1,8 +1,7 @@
 from .user import (
-    User, UserCreate, UserUpdate, UserWithProfile,
-    Mentor, MentorCreate, MentorUpdate,
-    Mentee, MenteeCreate, MenteeUpdate,
-    Token, TokenPayload
+    UserBase, UserCreate, UserUpdate, UserInDB, UserComplete,
+    MentorProfile, MentorProfileCreate, MentorProfileUpdate,
+    MenteeProfile, MenteeProfileCreate, MenteeProfileUpdate
 )
 from .skill import (
     Skill, SkillCreate, SkillUpdate, SkillList,
@@ -18,10 +17,9 @@ from .session import (
 )
 
 __all__ = [
-    "User", "UserCreate", "UserUpdate", "UserWithProfile",
-    "Mentor", "MentorCreate", "MentorUpdate",
-    "Mentee", "MenteeCreate", "MenteeUpdate",
-    "Token", "TokenPayload",
+    "UserBase", "UserCreate", "UserUpdate", "UserInDB", "UserComplete",
+    "MentorProfile", "MentorProfileCreate", "MentorProfileUpdate",
+    "MenteeProfile", "MenteeProfileCreate", "MenteeProfileUpdate",
     "Skill", "SkillCreate", "SkillUpdate", "SkillList",
     "MentorSkill", "MentorSkillCreate", "MentorSkillUpdate",
     "MentorSkillWithDetails", "MenteeInterestWithDetails",

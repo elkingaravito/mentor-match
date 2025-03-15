@@ -64,21 +64,63 @@ class UserInDB(UserBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # Actualizado de orm_mode a from_attributes
 
 class MentorProfile(MentorProfileBase):
     user_id: int
     current_mentee_count: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # Actualizado de orm_mode a from_attributes
 
 class MenteeProfile(MenteeProfileBase):
     user_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # Actualizado de orm_mode a from_attributes
 
 class UserComplete(UserInDB):
     mentor: Optional[MentorProfile] = None
     mentee: Optional[MenteeProfile] = None
+
+# Clases que se usan en __init__.py pero faltan en este archivo
+class User(UserInDB):
+    """Alias para UserInDB para compatibilidad"""
+    pass
+
+class UserWithProfile(UserComplete):
+    """Alias para UserComplete para compatibilidad"""
+    pass
+
+class Mentor(MentorProfile):
+    """Alias para MentorProfile para compatibilidad"""
+    pass
+
+class MentorCreate(MentorProfileCreate):
+    """Alias para MentorProfileCreate para compatibilidad"""
+    pass
+
+class MentorUpdate(MentorProfileUpdate):
+    """Alias para MentorProfileUpdate para compatibilidad"""
+    pass
+
+class Mentee(MenteeProfile):
+    """Alias para MenteeProfile para compatibilidad"""
+    pass
+
+class MenteeCreate(MenteeProfileCreate):
+    """Alias para MenteeProfileCreate para compatibilidad"""
+    pass
+
+class MenteeUpdate(MenteeProfileUpdate):
+    """Alias para MenteeProfileUpdate para compatibilidad"""
+    pass
+
+# Clases para autenticación
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenPayload(BaseModel):
+    sub: Optional[int] = None
+    exp: Optional[datetime] = None
