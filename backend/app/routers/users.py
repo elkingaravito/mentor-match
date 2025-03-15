@@ -1,352 +1,152 @@
-from typing import Any, List
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-
-from app import schemas
+from typing import Any, List
 from app.core.database import get_db
-from app.core.auth import get_current_active_user, get_current_admin
-from app.models import User, Mentor, Mentee
+from app.core.security import get_current_user
+from app.models.user import User, Mentor, Mentee
+from app.schemas.user import (
+    UserUpdate, UserComplete, 
+    MentorProfileCreate, MentorProfileUpdate,
+    MenteeProfileCreate, MenteeProfileUpdate
+)
 
 router = APIRouter()
 
-@router.get("/", response_model=List[schemas.User])
-def read_users(
-    skip: int = 0, limit: int = 100, db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin)
-) -> Any:
-    """
-    Retrieve users. Only for admins.
-    """
-    users = db.query(User).offset(skip).limit(limit).all()
-    return users
-
-@router.get("/me", response_model=schemas.UserWithProfile)
+@router.get("/me", response_model=UserComplete)
 def read_user_me(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ) -> Any:
     """
     Get current user.
     """
-    return current_user
-
-@router.get("/{user_id}", response_model=schemas.UserWithProfile)
-def read_user(
-    user_id: int, db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-) -> Any:
-    """
-    Get a specific user by id.
-    """
-    # Solo los administradores pueden ver cualquier usuario
-    # Los usuarios normales solo pueden verse a sí mismos
-    if current_user.id != user_id and current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions",
-        )
-    
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == current_user["user_id"]).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
+        raise HTTPException(status_code=404, detail="User not found")
     return user
 
-@router.put("/me", response_model=schemas.User)
+@router.put("/me", response_model=UserComplete)
 def update_user_me(
-    user_in: schemas.UserUpdate, db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    user_in: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ) -> Any:
     """
-    Update own user.
+    Update current user.
     """
-    update_data = user_in.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(current_user, field, value)
-    
-    db.commit()
-    db.refresh(current_user)
-    return current_user
-
-@router.put("/{user_id}", response_model=schemas.User)
-def update_user(
-    user_id: int, user_in: schemas.UserUpdate, db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin)
-) -> Any:
-    """
-    Update a user. Only for admins.
-    """
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == current_user["user_id"]).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
+        raise HTTPException(status_code=404, detail="User not found")
     
-    update_data = user_in.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
+    for field, value in user_in.dict(exclude_unset=True).items():
         setattr(user, field, value)
     
     db.commit()
     db.refresh(user)
     return user
 
-@router.delete("/{user_id}", response_model=schemas.User)
-def delete_user(
-    user_id: int, db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin)
+@router.post("/me/mentor-profile", response_model=UserComplete)
+def create_mentor_profile(
+    profile: MentorProfileCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ) -> Any:
     """
-    Delete a user. Only for admins.
+    Create mentor profile for current user.
     """
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == current_user["user_id"]).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.mentor:
+        raise HTTPException(status_code=400, detail="Mentor profile already exists")
     
-    db.delete(user)
+    mentor = Mentor(user_id=user.id, **profile.dict())
+    db.add(mentor)
     db.commit()
+    db.refresh(user)
     return user
 
-@router.post("/me/mentor", response_model=schemas.Mentor)
-def create_mentor_profile_me(
-    mentor_in: schemas.MentorCreate, db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-) -> Any:
-    """
-    Create a mentor profile for current user.
-    """
-    if current_user.role != "mentor":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User is not a mentor",
-        )
-    
-    mentor = db.query(Mentor).filter(Mentor.user_id == current_user.id).first()
-    if mentor:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Mentor profile already exists",
-        )
-    
-    mentor = Mentor(
-        user_id=current_user.id,
-        **mentor_in.model_dump(),
-    )
-    db.add(mentor)
-    db.commit()
-    db.refresh(mentor)
-    return mentor
-
-@router.post("/{user_id}/mentor", response_model=schemas.Mentor)
-def create_mentor_profile(
-    user_id: int, mentor_in: schemas.MentorCreate, db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin)
-) -> Any:
-    """
-    Create a mentor profile for a user. Only for admins.
-    """
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-    
-    if user.role != "mentor":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User is not a mentor",
-        )
-    
-    mentor = db.query(Mentor).filter(Mentor.user_id == user_id).first()
-    if mentor:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Mentor profile already exists",
-        )
-    
-    mentor = Mentor(
-        user_id=user_id,
-        **mentor_in.model_dump(),
-    )
-    db.add(mentor)
-    db.commit()
-    db.refresh(mentor)
-    return mentor
-
-@router.put("/me/mentor", response_model=schemas.Mentor)
-def update_mentor_profile_me(
-    mentor_in: schemas.MentorUpdate, db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-) -> Any:
-    """
-    Update own mentor profile.
-    """
-    if current_user.role != "mentor":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User is not a mentor",
-        )
-    
-    mentor = db.query(Mentor).filter(Mentor.user_id == current_user.id).first()
-    if not mentor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Mentor profile not found",
-        )
-    
-    update_data = mentor_in.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(mentor, field, value)
-    
-    db.commit()
-    db.refresh(mentor)
-    return mentor
-
-@router.put("/{user_id}/mentor", response_model=schemas.Mentor)
+@router.put("/me/mentor-profile", response_model=UserComplete)
 def update_mentor_profile(
-    user_id: int, mentor_in: schemas.MentorUpdate, db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin)
+    profile: MentorProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ) -> Any:
     """
-    Update a mentor profile. Only for admins.
+    Update mentor profile for current user.
     """
-    mentor = db.query(Mentor).filter(Mentor.user_id == user_id).first()
-    if not mentor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Mentor profile not found",
-        )
+    user = db.query(User).filter(User.id == current_user["user_id"]).first()
+    if not user or not user.mentor:
+        raise HTTPException(status_code=404, detail="Mentor profile not found")
     
-    update_data = mentor_in.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(mentor, field, value)
+    for field, value in profile.dict(exclude_unset=True).items():
+        setattr(user.mentor, field, value)
     
     db.commit()
-    db.refresh(mentor)
-    return mentor
+    db.refresh(user)
+    return user
 
-@router.post("/me/mentee", response_model=schemas.Mentee)
-def create_mentee_profile_me(
-    mentee_in: schemas.MenteeCreate, db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-) -> Any:
-    """
-    Create a mentee profile for current user.
-    """
-    if current_user.role != "mentee":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User is not a mentee",
-        )
-    
-    mentee = db.query(Mentee).filter(Mentee.user_id == current_user.id).first()
-    if mentee:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Mentee profile already exists",
-        )
-    
-    mentee = Mentee(
-        user_id=current_user.id,
-        **mentee_in.model_dump(),
-    )
-    db.add(mentee)
-    db.commit()
-    db.refresh(mentee)
-    return mentee
-
-@router.post("/{user_id}/mentee", response_model=schemas.Mentee)
+@router.post("/me/mentee-profile", response_model=UserComplete)
 def create_mentee_profile(
-    user_id: int, mentee_in: schemas.MenteeCreate, db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin)
+    profile: MenteeProfileCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ) -> Any:
     """
-    Create a mentee profile for a user. Only for admins.
+    Create mentee profile for current user.
     """
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == current_user["user_id"]).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.mentee:
+        raise HTTPException(status_code=400, detail="Mentee profile already exists")
     
-    if user.role != "mentee":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User is not a mentee",
-        )
-    
-    mentee = db.query(Mentee).filter(Mentee.user_id == user_id).first()
-    if mentee:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Mentee profile already exists",
-        )
-    
-    mentee = Mentee(
-        user_id=user_id,
-        **mentee_in.model_dump(),
-    )
+    mentee = Mentee(user_id=user.id, **profile.dict())
     db.add(mentee)
     db.commit()
-    db.refresh(mentee)
-    return mentee
+    db.refresh(user)
+    return user
 
-@router.put("/me/mentee", response_model=schemas.Mentee)
-def update_mentee_profile_me(
-    mentee_in: schemas.MenteeUpdate, db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-) -> Any:
-    """
-    Update own mentee profile.
-    """
-    if current_user.role != "mentee":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User is not a mentee",
-        )
-    
-    mentee = db.query(Mentee).filter(Mentee.user_id == current_user.id).first()
-    if not mentee:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Mentee profile not found",
-        )
-    
-    update_data = mentee_in.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(mentee, field, value)
-    
-    db.commit()
-    db.refresh(mentee)
-    return mentee
-
-@router.put("/{user_id}/mentee", response_model=schemas.Mentee)
+@router.put("/me/mentee-profile", response_model=UserComplete)
 def update_mentee_profile(
-    user_id: int, mentee_in: schemas.MenteeUpdate, db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin)
+    profile: MenteeProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ) -> Any:
     """
-    Update a mentee profile. Only for admins.
+    Update mentee profile for current user.
     """
-    mentee = db.query(Mentee).filter(Mentee.user_id == user_id).first()
-    if not mentee:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Mentee profile not found",
-        )
+    user = db.query(User).filter(User.id == current_user["user_id"]).first()
+    if not user or not user.mentee:
+        raise HTTPException(status_code=404, detail="Mentee profile not found")
     
-    update_data = mentee_in.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(mentee, field, value)
+    for field, value in profile.dict(exclude_unset=True).items():
+        setattr(user.mentee, field, value)
     
     db.commit()
-    db.refresh(mentee)
-    return mentee
+    db.refresh(user)
+    return user
+
+@router.get("/mentors", response_model=List[UserComplete])
+def list_mentors(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+) -> Any:
+    """
+    Retrieve mentors.
+    """
+    mentors = db.query(User).join(Mentor).offset(skip).limit(limit).all()
+    return mentors
+
+@router.get("/mentees", response_model=List[UserComplete])
+def list_mentees(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+) -> Any:
+    """
+    Retrieve mentees.
+    """
+    mentees = db.query(User).join(Mentee).offset(skip).limit(limit).all()
+    return mentees

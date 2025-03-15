@@ -11,7 +11,7 @@ class Settings(BaseModel):
     PROJECT_NAME: str = "Mentor Match"
     
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = ["*"]
+    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:5174", "http://localhost:5173", "http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:5174"]
     
     # JWT
     SECRET_KEY: str = os.getenv("SECRET_KEY", "supersecretkey")

@@ -1,37 +1,34 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-
-from app.core.config import settings
 from app.core.database import engine
 from app.models.base import Base
-from app.routers import api_router
-from app.routers.websockets import router as websocket_router
-
-# Crear tablas en la base de datos
-Base.metadata.create_all(bind=engine)
+from app.routers import users, auth, matching, calendar, statistics
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    title="Mentor Match API",
+    description="API para el sistema de matching de mentores y mentees",
+    version="1.0.0"
 )
 
-# Configurar CORS
-if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# CORS configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # En producción, especificar los orígenes permitidos
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Incluir rutas de la API
-app.include_router(api_router, prefix=settings.API_V1_STR)
+# Include routers
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(users.router, prefix="/api/users", tags=["Users"])
+app.include_router(matching.router, prefix="/api/matching", tags=["Matching"])
+app.include_router(calendar.router, prefix="/api/calendar", tags=["Calendar"])
+app.include_router(statistics.router, prefix="/api/statistics", tags=["Statistics"])
 
-# Incluir rutas de WebSockets
-app.include_router(websocket_router)
+# Create database tables
+Base.metadata.create_all(bind=engine)
 
 @app.get("/")
-def root():
-    return {"message": "Welcome to Mentor Match API"}
+async def root():
+    return {"message": "Bienvenido a Mentor Match API"}

@@ -1,91 +1,124 @@
-from typing import Any, Dict, List
-
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
-
+from typing import Any, List
+from datetime import datetime
 from app.core.database import get_db
-from app.core.auth import get_current_user, get_current_mentor
-from app.models import User, Mentor
-from app.services.calendar_integration import CalendarIntegrationService
+from app.core.security import get_current_user
+from app.models.user import User
+from app.models.availability import Availability, CalendarIntegration
+from app.services.calendar import CalendarService
 
 router = APIRouter()
 
-@router.get("/auth-url", response_model=Dict[str, str])
-def get_calendar_auth_url(current_user: User = Depends(get_current_mentor)) -> Any:
-    """
-    Get the URL for authorizing calendar access.
-    """
-    auth_url = CalendarIntegrationService.get_auth_url()
-    return {"auth_url": auth_url}
-
-@router.post("/callback", response_model=Dict[str, str])
-def calendar_auth_callback(
-    request: Request,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_mentor)
+@router.post("/availability")
+def create_availability(
+    start_time: datetime,
+    end_time: datetime,
+    recurrence: str = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ) -> Any:
     """
-    Handle the callback from the calendar authorization.
+    Create availability slot for current user.
     """
-    # Obtener el código de autorización de los parámetros de la solicitud
-    code = request.query_params.get("code")
-    if not code:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Authorization code is required",
-        )
-    
-    # Intercambiar el código por tokens
-    try:
-        tokens = CalendarIntegrationService.exchange_code_for_tokens(code)
-        CalendarIntegrationService.save_calendar_integration(current_user.id, tokens, db)
-        
-        return {"status": "success", "message": "Calendar integration successful"}
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error during calendar integration: {str(e)}",
-        )
+    availability = Availability(
+        user_id=current_user["user_id"],
+        start_time=start_time,
+        end_time=end_time,
+        recurrence=recurrence
+    )
+    db.add(availability)
+    db.commit()
+    db.refresh(availability)
+    return availability
 
-@router.get("/events", response_model=List[Dict[str, Any]])
-def get_calendar_events(
-    days: int = 7,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_mentor)
+@router.delete("/availability/{availability_id}")
+def delete_availability(
+    availability_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ) -> Any:
     """
-    Get calendar events for the current user.
+    Delete availability slot.
     """
-    mentor = db.query(Mentor).filter(Mentor.user_id == current_user.id).first()
-    if not mentor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Mentor profile not found",
-        )
+    availability = db.query(Availability).filter(
+        Availability.id == availability_id,
+        Availability.user_id == current_user["user_id"]
+    ).first()
     
-    if not mentor.calendar_integration:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Calendar not integrated",
-        )
+    if not availability:
+        raise HTTPException(status_code=404, detail="Availability not found")
     
-    start_date = datetime.now()
-    end_date = start_date + timedelta(days=days)
-    
-    events = CalendarIntegrationService.get_calendar_events(current_user.id, start_date, end_date, db)
-    return events
+    db.delete(availability)
+    db.commit()
+    return {"status": "success"}
 
-@router.get("/check-integration", response_model=Dict[str, bool])
-def check_calendar_integration(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_mentor)
+@router.post("/integrate/{provider}")
+async def integrate_calendar(
+    provider: str,
+    auth_code: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ) -> Any:
     """
-    Check if the user has integrated their calendar.
+    Integrate external calendar (Google Calendar, Outlook, etc.).
     """
-    mentor = db.query(Mentor).filter(Mentor.user_id == current_user.id).first()
-    if not mentor:
-        return {"integrated": False}
+    calendar_service = CalendarService()
+    credentials = await calendar_service.get_credentials(provider, auth_code)
     
-    return {"integrated": bool(mentor.calendar_integration)}
+    calendar_integration = CalendarIntegration(
+        user_id=current_user["user_id"],
+        provider=provider,
+        credentials=credentials,
+        is_active=True
+    )
+    
+    db.add(calendar_integration)
+    db.commit()
+    db.refresh(calendar_integration)
+    return {"status": "success", "provider": provider}
+
+@router.get("/sync")
+async def sync_calendar(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> Any:
+    """
+    Sync calendar with external provider.
+    """
+    integration = db.query(CalendarIntegration).filter(
+        CalendarIntegration.user_id == current_user["user_id"],
+        CalendarIntegration.is_active == True
+    ).first()
+    
+    if not integration:
+        raise HTTPException(
+            status_code=400,
+            detail="No active calendar integration found"
+        )
+    
+    calendar_service = CalendarService()
+    events = await calendar_service.sync_events(integration)
+    
+    integration.last_sync = datetime.utcnow()
+    db.commit()
+    
+    return {"status": "success", "events_synced": len(events)}
+
+@router.get("/availability/{user_id}")
+def get_user_availability(
+    user_id: int,
+    start_date: datetime,
+    end_date: datetime,
+    db: Session = Depends(get_db)
+) -> Any:
+    """
+    Get user's availability slots.
+    """
+    availability = db.query(Availability).filter(
+        Availability.user_id == user_id,
+        Availability.start_time >= start_date,
+        Availability.end_time <= end_date
+    ).all()
+    
+    return availability

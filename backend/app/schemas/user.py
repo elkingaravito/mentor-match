@@ -1,78 +1,84 @@
-from typing import Optional, List
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, constr
+from typing import Optional, List, Dict
+from datetime import datetime
 
-# Esquemas base
 class UserBase(BaseModel):
     email: EmailStr
     name: str
+    timezone: Optional[str] = None
+    languages: Optional[List[str]] = None
+    profile_picture: Optional[str] = None
 
-class MentorBase(BaseModel):
+class UserCreate(UserBase):
+    password: constr(min_length=8)
+    role: str
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    timezone: Optional[str] = None
+    languages: Optional[List[str]] = None
+    profile_picture: Optional[str] = None
+
+class MentorProfileBase(BaseModel):
     bio: Optional[str] = None
     experience_years: Optional[int] = None
     company: Optional[str] = None
     position: Optional[str] = None
     linkedin_url: Optional[str] = None
+    expertise_areas: Optional[List[str]] = None
+    mentoring_experience: Optional[Dict] = None
+    max_mentees: Optional[int] = 3
+    preferred_mentee_level: Optional[str] = None
+    mentoring_style: Optional[str] = None
+    session_format: Optional[List[str]] = None
 
-class MenteeBase(BaseModel):
+class MentorProfileCreate(MentorProfileBase):
+    pass
+
+class MentorProfileUpdate(MentorProfileBase):
+    pass
+
+class MenteeProfileBase(BaseModel):
     bio: Optional[str] = None
     goals: Optional[str] = None
     current_position: Optional[str] = None
     linkedin_url: Optional[str] = None
+    career_stage: Optional[str] = None
+    desired_skills: Optional[List[str]] = None
+    learning_style: Optional[str] = None
+    commitment_level: Optional[str] = None
+    program_duration: Optional[int] = None
+    specific_goals: Optional[List[Dict]] = None
 
-# Esquemas para creación
-class UserCreate(UserBase):
-    password: str
-    role: str
-
-class MentorCreate(MentorBase):
+class MenteeProfileCreate(MenteeProfileBase):
     pass
 
-class MenteeCreate(MenteeBase):
+class MenteeProfileUpdate(MenteeProfileBase):
     pass
 
-# Esquemas para actualización
-class UserUpdate(BaseModel):
-    email: Optional[EmailStr] = None
-    name: Optional[str] = None
-    password: Optional[str] = None
-
-class MentorUpdate(MentorBase):
-    pass
-
-class MenteeUpdate(MenteeBase):
-    pass
-
-# Esquemas para respuesta
-class User(UserBase):
+class UserInDB(UserBase):
     id: int
-    role: str
-    
-    class Config:
-        from_attributes = True
+    is_active: bool
+    profile_complete: bool
+    created_at: datetime
+    updated_at: datetime
 
-class Mentor(MentorBase):
+    class Config:
+        orm_mode = True
+
+class MentorProfile(MentorProfileBase):
     user_id: int
-    
-    class Config:
-        from_attributes = True
+    current_mentee_count: int
 
-class Mentee(MenteeBase):
+    class Config:
+        orm_mode = True
+
+class MenteeProfile(MenteeProfileBase):
     user_id: int
-    
+
     class Config:
-        from_attributes = True
+        orm_mode = True
 
-class UserWithProfile(User):
-    mentor: Optional[Mentor] = None
-    mentee: Optional[Mentee] = None
-    
-    class Config:
-        from_attributes = True
-
-# Esquema para autenticación
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenPayload(BaseModel):
-    sub: Optional[int] = None
+class UserComplete(UserInDB):
+    mentor: Optional[MentorProfile] = None
+    mentee: Optional[MenteeProfile] = None
