@@ -1,6 +1,60 @@
 Resumen del Proyecto Mentor-Match
+Previous conversation summary:
+Here's a concise summary of our conversation and implementations:
+Project: Mentor-Match
+A web-based system for matching mentors with mentees, managing sessions, and tracking progress.
+Key Implementations So Far:
+Backend Core Structure
+FastAPI-based REST API
+SQLAlchemy models for users, sessions, matching
+Advanced matching algorithm with ML capabilities
+Calendar integration with Google Calendar
+Notification system with multiple channels
+Frontend Components
+React/TypeScript architecture
+Material-UI components
+Session management
+Notification system
+Latest Implementation: Notification System
 
-Estado Actual
+// Key components:
+- NotificationCenter
+- NotificationSettings
+- NotificationIndicator
+- NotificationFilters
+Current Features
+User matching based on multiple factors
+Session scheduling with calendar integration
+Real-time notifications
+Email notifications
+Push notifications
+Notification preferences management
+Technical Stack
+
+Backend:
+  - FastAPI
+  - SQLAlchemy
+  - Celery (for background tasks)
+  - Redis (for caching)
+Frontend:
+  - React
+  - TypeScript
+  - Material-UI
+  - React Router
+Integrations:
+  - Google Calendar
+  - Firebase (for push notifications)
+  - SMTP (for emails)
+Next Planned Steps:
+Dashboard de análisis
+WebSocket implementation for real-time features
+Enhanced analytics and reporting
+Key Decisions Made:
+Using a service-based architecture
+Implementing a worker-based notification system
+Separating concerns between matching and scheduling
+Using TypeScript for type safety
+Implementing responsive design
 
 Hemos implementado y mejorado un sistema completo de mentoría con las siguientes características:
 
@@ -82,7 +136,12 @@ Seguridad:
 Implementar autenticación de dos factores
 Mejorar la protección contra ataques CSRF y XSS
 Auditoría de seguridad completa
-El sistema está funcionando correctamente y listo para ser utilizado en un entorno de producción, con las funcionalidades principales implementadas y probadas.
+
+Current Focus:
+Revisar el codigo del back y el front para encontrar posibles errores en el codigo, yo me encargo de parar y relanzar los servicios una vez tu me digas que hay que hacerlo.
+procuremos un bajo acomplamiento y una alta cohesión.
+
+
 
 # Para detener el frontend
 pkill -f "python serve.py"

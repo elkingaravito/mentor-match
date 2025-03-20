@@ -30,13 +30,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const storedUser = localStorage.getItem('user');
 
     if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      setIsAuthenticated(true);
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        console.log('[Auth] Restoring session:', { user: parsedUser });
+        setToken(storedToken);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('[Auth] Error restoring session:', error);
+        // Si hay un error al parsear el usuario, limpiar el estado
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    } else {
+      console.log('[Auth] No stored session found');
     }
   }, []);
 
   const login = (newToken: string, newUser: User) => {
+    console.log('[Auth] Logging in:', { user: newUser });
     localStorage.setItem('token', newToken);
     localStorage.setItem('user', JSON.stringify(newUser));
     setToken(newToken);
@@ -45,6 +57,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
+    console.log('[Auth] Logging out');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setToken(null);

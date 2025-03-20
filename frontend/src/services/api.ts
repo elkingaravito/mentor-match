@@ -1,161 +1,192 @@
-import axios from 'axios';
+// /Users/apple/Workspace/mentor-match/frontend/src/services/api.ts
 
-export const api = axios.create({
-    baseURL: 'http://localhost:8000/api',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
+import { createApi, fetchBaseQuery, FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
+import { 
+    User, Mentor, Mentee, Session, Statistics, 
+    Notification, Match, ApiResponse, ApiError,
+    GlobalStatistics, UserStatistics, TrendStatistics
+} from '../types';
+import { API_BASE_URL, API_ENDPOINTS } from '../config';
+import { retry } from '../utils/api';
+import { createCustomError } from '../utils/error';
 
-// Add request interceptor to include auth token
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+// API Configuration
+const API_CONFIG = {
+    baseUrl: API_BASE_URL,
+    retryConfig: {
+        maxRetries: 3,
+        backoff: 'exponential',
+        statusCodes: [408, 429, 500, 502, 503, 504]
     }
-);
+};
 
-// Add response interceptor to handle errors
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            // Handle unauthorized access
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
-        }
-        return Promise.reject(error);
-    }
-);
-
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { User, Mentor, Mentee, Session, Statistics, Notification, Match } from '../types';
-
-// Define la base query con la configuración del token
+// Base query with token handling
 const baseQuery = fetchBaseQuery({
-    baseUrl: '/api',
+    baseUrl: API_CONFIG.baseUrl,
     prepareHeaders: (headers) => {
         const token = localStorage.getItem('token');
         if (token) {
             headers.set('authorization', `Bearer ${token}`);
         }
         return headers;
-    },
+    }
 });
 
-// Crear la API
+// Enhanced query with retry logic and error handling
+const enhancedBaseQuery = retry(baseQuery, API_CONFIG.retryConfig);
+
+// API definition with type-safe endpoints
 export const apiSlice = createApi({
     reducerPath: 'api',
-    baseQuery,
+    baseQuery: enhancedBaseQuery,
     tagTypes: ['User', 'Session', 'Notification', 'Match', 'Statistics'],
     endpoints: (builder) => ({
         // Auth endpoints
-        login: builder.mutation({
+        login: builder.mutation<ApiResponse<{ token: string; user: User }>, { email: string; password: string }>({
             query: (credentials) => ({
-                url: '/auth/login',
+                url: API_ENDPOINTS.auth.login,
                 method: 'POST',
                 body: credentials,
             }),
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
         }),
-        register: builder.mutation({
+        register: builder.mutation<ApiResponse<{ token: string; user: User }>, any>({
             query: (userData) => ({
-                url: '/auth/register',
+                url: API_ENDPOINTS.auth.register,
                 method: 'POST',
                 body: userData,
             }),
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
+        }),
+
+        // User endpoints
+        getUser: builder.query<ApiResponse<User>, void>({
+            query: () => API_ENDPOINTS.users.profile,
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
+            providesTags: ['User'],
+        }),
+        getMentors: builder.query<ApiResponse<Mentor[]>, void>({
+            query: () => API_ENDPOINTS.users.mentors,
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
+            providesTags: ['User'],
+        }),
+        getMentees: builder.query<ApiResponse<Mentee[]>, void>({
+            query: () => API_ENDPOINTS.users.mentees,
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
+            providesTags: ['User'],
         }),
 
         // Profile endpoints
-        createMentorProfile: builder.mutation({
+        createMentorProfile: builder.mutation<ApiResponse<Mentor>, any>({
             query: (profile) => ({
-                url: '/users/mentor-profile',
+                url: API_ENDPOINTS.users.mentorProfile,
                 method: 'POST',
                 body: profile,
             }),
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
             invalidatesTags: ['User'],
         }),
-        createMenteeProfile: builder.mutation({
+        createMenteeProfile: builder.mutation<ApiResponse<Mentee>, any>({
             query: (profile) => ({
-                url: '/users/mentee-profile',
+                url: API_ENDPOINTS.users.menteeProfile,
                 method: 'POST',
                 body: profile,
             }),
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
             invalidatesTags: ['User'],
         }),
-        updateProfile: builder.mutation({
+        updateProfile: builder.mutation<ApiResponse<User>, any>({
             query: (profile) => ({
-                url: '/users/profile',
+                url: API_ENDPOINTS.users.profile,
                 method: 'PUT',
                 body: profile,
             }),
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
             invalidatesTags: ['User'],
         }),
 
-        // User queries
-        getMentors: builder.query<Mentor[], void>({
-            query: () => '/users/mentors',
-            providesTags: ['User'],
+        // Statistics endpoints
+        getUserStatistics: builder.query<ApiResponse<UserStatistics>, void>({
+            query: () => API_ENDPOINTS.statistics.user,
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
+            providesTags: ['Statistics'],
         }),
-        getMentees: builder.query<Mentee[], void>({
-            query: () => '/users/mentees',
-            providesTags: ['User'],
+        getGlobalStatistics: builder.query<ApiResponse<GlobalStatistics>, void>({
+            query: () => API_ENDPOINTS.statistics.global,
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
+            providesTags: ['Statistics'],
+        }),
+        getTopMentors: builder.query<ApiResponse<Mentor[]>, void>({
+            query: () => API_ENDPOINTS.statistics.topMentors,
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
+            providesTags: ['Statistics'],
+        }),
+        getPopularSkills: builder.query<ApiResponse<{ skill: string; count: number }[]>, void>({
+            query: () => API_ENDPOINTS.statistics.popularSkills,
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
+            providesTags: ['Statistics'],
+        }),
+        getSessionTrends: builder.query<ApiResponse<TrendStatistics>, { days?: number }>({
+            query: ({ days = 30 }) => ({
+                url: API_ENDPOINTS.statistics.sessionTrends,
+                params: { days },
+            }),
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
+            providesTags: ['Statistics'],
         }),
 
         // Session endpoints
-        getSessions: builder.query<Session[], void>({
-            query: () => '/sessions',
+        getSessions: builder.query<ApiResponse<Session[]>, void>({
+            query: () => API_ENDPOINTS.sessions.base,
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
             providesTags: ['Session'],
         }),
-        getSession: builder.query<Session, number>({
-            query: (id) => `/sessions/${id}`,
+        getSession: builder.query<ApiResponse<Session>, number>({
+            query: (id) => API_ENDPOINTS.sessions.byId(id),
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
             providesTags: ['Session'],
         }),
 
         // Notification endpoints
-        getUserNotifications: builder.query<Notification[], void>({
-            query: () => '/notifications',
+        getNotifications: builder.query<ApiResponse<Notification[]>, void>({
+            query: () => API_ENDPOINTS.notifications.base,
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
             providesTags: ['Notification'],
         }),
-
-        // Statistics endpoints
-        getUserStatistics: builder.query<Statistics, void>({
-            query: () => {
-                const user = JSON.parse(localStorage.getItem('user') || '{}');
-                return `/statistics/user/${user.id}`;
-            },
-            providesTags: ['Statistics'],
+        markNotificationRead: builder.mutation<ApiResponse<void>, number>({
+            query: (id) => ({
+                url: `${API_ENDPOINTS.notifications.base}/${id}/read`,
+                method: 'PUT'
+            }),
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
+            invalidatesTags: ['Notification'],
         }),
-        getGlobalStatistics: builder.query<Statistics, void>({
-            query: () => '/statistics/global',
-            providesTags: ['Statistics'],
+        markAllNotificationsRead: builder.mutation<ApiResponse<void>, void>({
+            query: () => ({
+                url: `${API_ENDPOINTS.notifications.base}/read-all`,
+                method: 'PUT'
+            }),
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
+            invalidatesTags: ['Notification'],
         }),
-        getTopMentors: builder.query<Mentor[], void>({
-            query: () => '/statistics/top-mentors',
-            providesTags: ['Statistics'],
-        }),
-        getPopularSkills: builder.query<any[], void>({
-            query: () => '/statistics/popular-skills',
-            providesTags: ['Statistics'],
-        }),
-        getSessionTrends: builder.query<any[], void>({
-            query: () => '/statistics/session-trends',
-            providesTags: ['Statistics'],
+        deleteNotification: builder.mutation<ApiResponse<void>, number>({
+            query: (id) => ({
+                url: `${API_ENDPOINTS.notifications.base}/${id}`,
+                method: 'DELETE'
+            }),
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
+            invalidatesTags: ['Notification'],
         }),
 
         // Matching endpoints
-        getMenteeMatches: builder.query<Match[], void>({
-            query: () => '/matching/mentee-matches',
+        getMenteeMatches: builder.query<ApiResponse<Match[]>, void>({
+            query: () => API_ENDPOINTS.matching.menteeMatches,
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
             providesTags: ['Match'],
         }),
-        getMentorMatches: builder.query<Match[], void>({
-            query: () => '/matching/mentor-matches',
+        getMentorMatches: builder.query<ApiResponse<Match[]>, void>({
+            query: () => API_ENDPOINTS.matching.mentorMatches,
+            transformErrorResponse: (response: FetchBaseQueryError) => createCustomError(response),
             providesTags: ['Match'],
         }),
     }),
@@ -163,21 +194,32 @@ export const apiSlice = createApi({
 
 // Export hooks
 export const {
+    // Auth
     useLoginMutation,
     useRegisterMutation,
+    // User
+    useGetUserQuery,
+    useGetMentorsQuery,
+    useGetMenteesQuery,
+    // Profile
     useCreateMentorProfileMutation,
     useCreateMenteeProfileMutation,
     useUpdateProfileMutation,
-    useGetMentorsQuery,
-    useGetMenteesQuery,
-    useGetSessionsQuery,
-    useGetSessionQuery,
-    useGetUserNotificationsQuery,
+    // Statistics
     useGetUserStatisticsQuery,
     useGetGlobalStatisticsQuery,
     useGetTopMentorsQuery,
     useGetPopularSkillsQuery,
     useGetSessionTrendsQuery,
+    // Sessions
+    useGetSessionsQuery,
+    useGetSessionQuery,
+    // Notifications
+    useGetNotificationsQuery,
+    useMarkNotificationReadMutation,
+    useMarkAllNotificationsReadMutation,
+    useDeleteNotificationMutation,
+    // Matching
     useGetMenteeMatchesQuery,
     useGetMentorMatchesQuery,
 } = apiSlice;

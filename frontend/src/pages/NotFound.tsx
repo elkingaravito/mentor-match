@@ -1,32 +1,27 @@
-import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
-const NotFound: React.FC = () => {
+const NotFound = () => {
   const navigate = useNavigate();
 
   return (
     <Box
       sx={{
+        height: '100vh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        height: '100vh',
-        textAlign: 'center',
+        gap: 2,
       }}
     >
-      <Typography variant="h1" gutterBottom>
-        404
-      </Typography>
-      <Typography variant="h4" gutterBottom>
-        Página no encontrada
-      </Typography>
-      <Typography variant="body1" sx={{ mb: 3 }}>
-        La página que estás buscando no existe.
-      </Typography>
-      <Button variant="contained" onClick={() => navigate('/')}>
-        Volver al inicio
+      <Typography variant="h1">404</Typography>
+      <Typography variant="h5">Page Not Found</Typography>
+      <Button 
+        variant="contained" 
+        onClick={() => navigate('/')}
+      >
+        Go to Home
       </Button>
     </Box>
   );

@@ -2,41 +2,37 @@ import { createTheme } from '@mui/material/styles';
 
 export const theme = createTheme({
   palette: {
+    mode: 'light',
     primary: {
-      main: '#3f51b5',
+      main: '#1976d2',
     },
     secondary: {
-      main: '#f50057',
+      main: '#dc004e',
     },
     background: {
       default: '#f5f5f5',
+      paper: '#ffffff',
     },
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
     h1: {
-      fontSize: '2.5rem',
-      fontWeight: 500,
+      fontWeight: 600,
     },
     h2: {
-      fontSize: '2rem',
-      fontWeight: 500,
+      fontWeight: 600,
     },
     h3: {
-      fontSize: '1.75rem',
-      fontWeight: 500,
+      fontWeight: 600,
     },
     h4: {
-      fontSize: '1.5rem',
-      fontWeight: 500,
+      fontWeight: 600,
     },
     h5: {
-      fontSize: '1.25rem',
-      fontWeight: 500,
+      fontWeight: 600,
     },
     h6: {
-      fontSize: '1rem',
-      fontWeight: 500,
+      fontWeight: 600,
     },
   },
   components: {
@@ -48,11 +44,10 @@ export const theme = createTheme({
         },
       },
     },
-    MuiCard: {
+    MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+          borderRadius: 8,
         },
       },
     },
