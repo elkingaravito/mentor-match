@@ -1,22 +1,11 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, Boolean
 from sqlalchemy.orm import relationship
 from .base import Base, TimestampMixin
-
-class Availability(Base):
-    __tablename__ = "availability"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    day_of_week = Column(Integer, nullable=False)  # 0-6 (domingo a sábado)
-    start_time = Column(String, nullable=False)  # Formato HH:MM
-    end_time = Column(String, nullable=False)  # Formato HH:MM
-    recurrence = Column(String, nullable=False)  # 'weekly', 'biweekly', 'monthly'
-
-    # Relaciones
-    user = relationship("User", back_populates="availability")
+from .availability import Availability  # Importar en lugar de redefinir
 
 class Session(Base, TimestampMixin):
     __tablename__ = "sessions"
+    __table_args__ = {'extend_existing': True}  # Añadir esta línea
 
     id = Column(Integer, primary_key=True, index=True)
     mentor_id = Column(Integer, ForeignKey("mentors.user_id"))
@@ -34,6 +23,7 @@ class Session(Base, TimestampMixin):
 
 class SessionFeedback(Base, TimestampMixin):
     __tablename__ = "session_feedback"
+    __table_args__ = {'extend_existing': True}  # Añadir esta línea
 
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey("sessions.id"))
@@ -45,14 +35,3 @@ class SessionFeedback(Base, TimestampMixin):
     session = relationship("Session", back_populates="feedback")
     user = relationship("User")
 
-class Notification(Base, TimestampMixin):
-    __tablename__ = "notifications"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    type = Column(String, nullable=False)  # 'session_reminder', 'session_cancelled', etc.
-    message = Column(Text, nullable=False)
-    read = Column(Boolean, default=False)
-
-    # Relaciones
-    user = relationship("User", back_populates="notifications")

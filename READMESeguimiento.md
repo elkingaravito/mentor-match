@@ -86,12 +86,15 @@ El sistema está funcionando correctamente y listo para ser utilizado en un ento
 
 # Para detener el frontend
 pkill -f "python serve.py"
-
+cd /Users/apple/Workspace/mentor-match/frontend && python3 serve.py &
+Usar npm run dev durante el desarrollo para aprovechar todas las características de desarrollo moderno
+Usar npm run serve (que ejecutaría tu serve.py) para probar la build de producción
 # Para detener el backend
 pkill -f "uvicorn app.main:app"
 
 
 cd /Users/apple/Workspace/mentor-match/backend && source ../.venv/bin/activate && uvicorn app.main:app --reload &
 
-cd /Users/apple/Workspace/mentor-match/frontend && python3 serve.py &
+cd /Users/apple/Workspace/mentor-match/backend && source ../.venv/bin/activate && uvicorn app.main:app --reload --log-level debug
+
 

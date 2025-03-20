@@ -26,10 +26,13 @@ class NotificationService:
         )
         self.fastmail = FastMail(self.email_config)
         
-        # Inicializar Firebase Admin para notificaciones push
-        if not firebase_admin._apps:
-            cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
-            firebase_admin.initialize_app(cred)
+        # Inicializar Firebase Admin para notificaciones push (si está configurado)
+        try:
+            if not firebase_admin._apps and os.path.exists(settings.FIREBASE_CREDENTIALS_PATH):
+                cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
+                firebase_admin.initialize_app(cred)
+        except Exception as e:
+            print(f"Warning: Firebase initialization failed: {e}")
 
     async def create_notification(
         self,

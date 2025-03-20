@@ -4,21 +4,17 @@ from .base import Base, TimestampMixin
 
 class Availability(Base, TimestampMixin):
     __tablename__ = "availability"
+    __table_args__ = {'extend_existing': True}  # Añadir esto para prevenir errores de tabla duplicada
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    start_time = Column(DateTime, nullable=False)
-    end_time = Column(DateTime, nullable=False)
-    recurrence = Column(String)  # RRULE format for recurring availability
-    is_available = Column(Boolean, default=True)
-    calendar_event_id = Column(String)  # Reference to external calendar event
-    
-    # Metadata for calendar integration
-    calendar_integration = Column(JSON)  # Stores calendar provider details
-    
-    # Relationships
+    day_of_week = Column(Integer, nullable=False)  # 0-6 (domingo a sábado)
+    start_time = Column(String, nullable=False)  # Formato HH:MM
+    end_time = Column(String, nullable=False)  # Formato HH:MM
+    recurrence = Column(String, nullable=False)  # 'weekly', 'biweekly', 'monthly'
+
+    # Relaciones
     user = relationship("User", back_populates="availability")
-    sessions = relationship("Session", back_populates="availability")
 
 class CalendarIntegration(Base):
     __tablename__ = "calendar_integrations"

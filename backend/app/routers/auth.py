@@ -2,15 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
-from app.core.security import create_access_token, verify_password, ACCESS_TOKEN_EXPIRE_MINUTES
+from pydantic import BaseModel
+from app.core.security import create_access_token, verify_password, ACCESS_TOKEN_EXPIRE_MINUTES, get_password_hash
 from app.core.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserInDB
+from app.schemas.user import UserCreate, UserInDB, Token, LoginResponse
 from typing import Any
+from app.core.auth import get_current_user  # Importamos get_current_user de app.core.auth
 
 router = APIRouter()
 
-@router.post("/signup", response_model=UserInDB)
+@router.post("/register", response_model=UserInDB)
 def signup(user: UserCreate, db: Session = Depends(get_db)) -> Any:
     """
     Crear un nuevo usuario.
@@ -35,16 +37,20 @@ def signup(user: UserCreate, db: Session = Depends(get_db)) -> Any:
     db.refresh(db_user)
     return db_user
 
-@router.post("/token")
-def login(
-    db: Session = Depends(get_db),
-    form_data: OAuth2PasswordRequestForm = Depends()
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+@router.post("/login", response_model=LoginResponse)
+async def login(
+    login_data: LoginRequest,
+    db: Session = Depends(get_db)
 ) -> Any:
     """
-    OAuth2 compatible token login, get an access token for future requests.
+    Login endpoint that accepts JSON instead of form-data
     """
-    user = db.query(User).filter(User.email == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.password_hash):
+    user = db.query(User).filter(User.email == login_data.email).first()
+    if not user or not verify_password(login_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -56,12 +62,13 @@ def login(
         data={"sub": str(user.id)}, expires_delta=access_token_expires
     )
     
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user_id": user.id,
-        "role": user.role
-    }
+    return LoginResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user_id=user.id,
+        role=user.role,
+        user=user
+    )
 
 @router.post("/test-token", response_model=UserInDB)
 def test_token(current_user: User = Depends(get_current_user)) -> Any:

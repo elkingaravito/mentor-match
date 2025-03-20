@@ -25,10 +25,16 @@ class Settings(BaseModel):
     GOOGLE_CLIENT_ID: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET: Optional[str] = os.getenv("GOOGLE_CLIENT_SECRET")
     GOOGLE_REDIRECT_URI: Optional[str] = os.getenv("GOOGLE_REDIRECT_URI")
+    
+    # Email Settings
+    MAIL_USERNAME: str = os.getenv("MAIL_USERNAME", "")
+    MAIL_PASSWORD: str = os.getenv("MAIL_PASSWORD", "")
+    MAIL_FROM: str = os.getenv("MAIL_FROM", "")
+    MAIL_PORT: int = int(os.getenv("MAIL_PORT", "587"))
+    MAIL_SERVER: str = os.getenv("MAIL_SERVER", "smtp.gmail.com")
+    
+    # Firebase
+    FIREBASE_CREDENTIALS_PATH: str = os.getenv("FIREBASE_CREDENTIALS_PATH", "firebase-credentials.json")
 
 settings = Settings()
 
-# Imprimir configuración para depuración
-print(f"GOOGLE_CLIENT_ID: {settings.GOOGLE_CLIENT_ID}")
-print(f"GOOGLE_CLIENT_SECRET: {settings.GOOGLE_CLIENT_SECRET}")
-print(f"GOOGLE_REDIRECT_URI: {settings.GOOGLE_REDIRECT_URI}")

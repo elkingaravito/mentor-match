@@ -1,5 +1,5 @@
 from .matchmaking import MatchmakingService
-from .calendar_integration import CalendarIntegrationService
+from .calendar_integration import CalendarService
 from .statistics import StatisticsService
 
 __all__ = [

@@ -103,3 +103,10 @@ class SessionList(BaseModel):
 
 class NotificationList(BaseModel):
     notifications: List[Notification]
+
+class SessionWithCalendar(Session):
+    calendar_link: Optional[str] = None
+
+class SessionResponse(Session):
+    mentor_name: Optional[str] = None
+    mentee_name: Optional[str] = None

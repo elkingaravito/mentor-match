@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from app.models.base import Base, TimestampMixin
 
 class Notification(Base, TimestampMixin):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "notifications"
 
     id = Column(Integer, primary_key=True, index=True)

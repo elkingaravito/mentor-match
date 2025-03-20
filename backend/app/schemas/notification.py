@@ -19,7 +19,7 @@ class NotificationResponse(NotificationBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class NotificationSettings(BaseModel):
     email_notifications: bool = True

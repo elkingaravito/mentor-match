@@ -1,14 +1,23 @@
-from typing import Dict, Optional, List
-from sqlalchemy.orm import Session
-from google.oauth2.credentials import Credentials
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-from datetime import datetime, timedelta
+from typing import Dict, Any, Optional, List
 import json
+from datetime import datetime, timedelta
 import os
-from app.models.user import User
-from app.models.availability import CalendarIntegration
+from sqlalchemy.orm import Session
+
+try:
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import Flow
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
+    GOOGLE_CALENDAR_AVAILABLE = True
+except ImportError:
+    GOOGLE_CALENDAR_AVAILABLE = False
+    print("Google Calendar API libraries not available. Calendar integration will be disabled.")
+
+# Importar correctamente los modelos
+from app.models.user import User, Mentor, Mentee
+from app.models.availability import Availability, CalendarIntegration
+from app.models.session import Session
 from app.core.config import settings
 
 class CalendarService:
