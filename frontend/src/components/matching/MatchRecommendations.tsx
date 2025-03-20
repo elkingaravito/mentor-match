@@ -1,136 +1,122 @@
-import React, { useEffect } from "react";
+import React from 'react';
 import {
     Card,
     CardContent,
     Typography,
+    List,
+    ListItem,
+    ListItemText,
     Button,
-    Grid,
-    CircularProgress,
-    Alert,
     Box,
     Chip,
     Rating,
-    Stack,
-} from "@mui/material";
-import { useMatching } from "../../hooks/useMatching";
-import { MatchScore } from "../../types/matching";
+    CircularProgress,
+} from '@mui/material';
+import { Match } from '../../types';
+import { useGetMenteeMatchesQuery, useGetMentorMatchesQuery } from '../../services/api';
 
-interface MatchCardProps {
-    match: MatchScore;
-    onAccept: (id: number) => void;
-    onReject: (id: number) => void;
-    isMentor: boolean;
-}
-
-const MatchCard: React.FC<MatchCardProps> = ({ match, onAccept, onReject, isMentor }) => {
-    const profileId = isMentor ? match.mentee_id : match.mentor_id;
-    
-    return (
-        <Card sx={{ height: "100%" }}>
-            <CardContent>
-                <Typography variant="h6" gutterBottom>
-                    Match Score: {(match.total_score * 100).toFixed(1)}%
-                </Typography>
-                
-                <Stack direction="row" spacing={1} mb={2}>
-                    <Chip 
-                        label={`Skills: ${(match.skill_match_score * 100).toFixed(1)}%`}
-                        color="primary"
-                        variant="outlined"
-                    />
-                    <Chip 
-                        label={`Availability: ${(match.availability_score * 100).toFixed(1)}%`}
-                        color="primary"
-                        variant="outlined"
-                    />
-                </Stack>
-
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Matching Skills:
-                </Typography>
-                <Box sx={{ mb: 2 }}>
-                    {match.match_details.matching_skills.map((skill) => (
-                        <Chip 
-                            key={skill}
-                            label={skill}
-                            size="small"
-                            sx={{ m: 0.5 }}
-                        />
-                    ))}
-                </Box>
-
-                <Typography variant="body2" color="text.secondary">
-                    Available Time Slots: {match.match_details.matching_availability}
-                </Typography>
-
-                <Box sx={{ mt: 2, display: "flex", justifyContent: "space-between" }}>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => onAccept(match.id)}
-                    >
-                        Accept
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        color="secondary"
-                        onClick={() => onReject(match.id)}
-                    >
-                        Decline
-                    </Button>
-                </Box>
-            </CardContent>
-        </Card>
-    );
-};
-
-export const MatchRecommendations: React.FC = () => {
+const MatchRecommendations: React.FC<{ userRole: 'mentor' | 'mentee' }> = ({ userRole }) => {
     const {
-        suggestions,
-        loading,
-        error,
-        loadSuggestions,
-        acceptMatch,
-        rejectMatch,
-        isMentor
-    } = useMatching();
+        data: menteeMatches,
+        isLoading: isMenteeLoading,
+        error: menteeError
+    } = useGetMenteeMatchesQuery();
 
-    useEffect(() => {
-        loadSuggestions();
-    }, [loadSuggestions]);
+    const {
+        data: mentorMatches,
+        isLoading: isMentorLoading,
+        error: mentorError
+    } = useGetMentorMatchesQuery();
 
-    if (loading) {
+    const matches = userRole === 'mentor' ? mentorMatches : menteeMatches;
+    const isLoading = userRole === 'mentor' ? isMentorLoading : isMenteeLoading;
+    const error = userRole === 'mentor' ? mentorError : menteeError;
+
+    if (isLoading) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+            <Box display="flex" justifyContent="center" p={3}>
                 <CircularProgress />
             </Box>
         );
     }
 
     if (error) {
-        return <Alert severity="error">{error}</Alert>;
-    }
-
-    if (!suggestions.length) {
         return (
-            <Alert severity="info">
-                No matching suggestions available at the moment.
-            </Alert>
+            <Typography color="error">
+                Error al cargar las recomendaciones
+            </Typography>
         );
     }
 
     return (
-        <Grid container spacing={3}>
-            {suggestions.map((match) => (
-                <Grid item xs={12} sm={6} md={4} key={match.id}>
-                    <MatchCard
-                        match={match}
-                        onAccept={acceptMatch}
-                        onReject={rejectMatch}
-                        isMentor={isMentor}
-                    />
-                </Grid>
-            ))}
-        </Grid>
+        <Card>
+            <CardContent>
+                <Typography variant="h6" gutterBottom>
+                    Recomendaciones de {userRole === 'mentor' ? 'Mentees' : 'Mentores'}
+                </Typography>
+                <List>
+                    {matches?.map((match: Match) => (
+                        <ListItem
+                            key={userRole === 'mentor' ? match.mentee.id : match.mentor.id}
+                            divider
+                            alignItems="flex-start"
+                        >
+                            <ListItemText
+                                primary={
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                        <Typography variant="subtitle1">
+                                            {userRole === 'mentor' ? match.mentee.name : match.mentor.name}
+                                        </Typography>
+                                        <Chip
+                                            size="small"
+                                            label={`${Math.round(match.compatibility_score * 100)}% compatible`}
+                                            color="primary"
+                                        />
+                                    </Box>
+                                }
+                                secondary={
+                                    <Box>
+                                        <Typography variant="body2" color="text.secondary">
+                                            Intereses comunes:
+                                        </Typography>
+                                        <Box display="flex" gap={0.5} flexWrap="wrap" mt={0.5}>
+                                            {match.common_interests.map((interest, index) => (
+                                                <Chip
+                                                    key={index}
+                                                    label={interest}
+                                                    size="small"
+                                                    variant="outlined"
+                                                />
+                                            ))}
+                                        </Box>
+                                        {userRole === 'mentee' && match.mentor.rating && (
+                                            <Box display="flex" alignItems="center" mt={1}>
+                                                <Rating
+                                                    value={match.mentor.rating}
+                                                    readOnly
+                                                    size="small"
+                                                />
+                                                <Typography variant="body2" ml={1}>
+                                                    ({match.mentor.total_sessions} sesiones)
+                                                </Typography>
+                                            </Box>
+                                        )}
+                                    </Box>
+                                }
+                            />
+                            <Button
+                                variant="contained"
+                                size="small"
+                                sx={{ ml: 2, alignSelf: 'center' }}
+                            >
+                                Conectar
+                            </Button>
+                        </ListItem>
+                    ))}
+                </List>
+            </CardContent>
+        </Card>
     );
 };
+
+export default MatchRecommendations;

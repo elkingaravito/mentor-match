@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Box, Paper, CircularProgress } from '@mui/material';
 import MatchRecommendations from '../components/matching/MatchRecommendations';
-import { useMatchRecommendations } from '../hooks/useMatchRecommendations';
+import { useMatchRecommendations } from '../hooks/useMatchRecommendations'; 
 import { useAuth } from '../context/AuthContext';
 import { UserProfile } from '../types/matching';
 import { api } from '../services/api';
