@@ -1,12 +1,18 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { wsApi } from './services/websocket';
+import { api } from './services/api';
+import notificationReducer from './store/slices/notificationSlice';
+import messageReducer from './store/slices/messageSlice';
+import sessionReducer from './store/slices/sessionSlice';
 
 export const store = configureStore({
   reducer: {
-    [wsApi.reducerPath]: wsApi.reducer,
+    [api.reducerPath]: api.reducer,
+    notification: notificationReducer,
+    message: messageReducer,
+    session: sessionReducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(wsApi.middleware),
+    getDefaultMiddleware().concat(api.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

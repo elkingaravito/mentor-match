@@ -1,15 +1,33 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import LoadingScreen from './feedback/LoadingScreen';
 
-const ProtectedRoute: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  requireAuth?: boolean;
+}
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+  children, 
+  requireAuth = true 
+}) => {
+  const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return <LoadingScreen />;
   }
 
-  return <Outlet />;
+  if (requireAuth && !isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (!requireAuth && isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

@@ -1,26 +1,13 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
+import PublicLayout from './components/PublicLayout';
 import { useAuth } from './context/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
+import { LazyRoute } from './components/LazyRoute';
+import LoadingScreen from './components/feedback/LoadingScreen';
 
-// Páginas
-const Login = React.lazy(() => import('./pages/Login'));
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-const Profile = React.lazy(() => import('./pages/Profile'));
-const Notifications = React.lazy(() => import('./pages/Notifications'));
-const NotFound = React.lazy(() => import('./pages/NotFound'));
-
-// Componente de carga
-const LoadingFallback = () => (
-  <div style={{ 
-    display: 'flex', 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    height: '100vh' 
-  }}>
-    Loading...
-  </div>
-);
+const LoadingFallback = () => <LoadingScreen />;
 
 // Componente de ruta protegida
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -28,34 +15,73 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
-export const AppRoutes = () => {
+// Componente de ruta pública
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
+  return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" replace />;
+};
+
+export const AppRoutes = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingFallback />;
+  }
 
   return (
     <React.Suspense fallback={<LoadingFallback />}>
       <Routes>
         {/* Rutas públicas */}
-        <Route 
-          path="/login" 
-          element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />} 
-        />
+        <Route element={<PublicLayout />}>
+          <Route 
+            path="/" 
+            element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LazyRoute path="Landing" />}
+          />
+          <Route 
+            path="/login" 
+            element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LazyRoute path="Login" />}
+          />
+          <Route 
+            path="/register" 
+            element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LazyRoute path="Register" />}
+          />
+        </Route>
 
         {/* Rutas protegidas */}
-        <Route
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/notifications" element={<Notifications />} />
+        <Route element={isAuthenticated ? <Layout /> : <Navigate to="/login" replace />}>
+          <Route path="/dashboard" element={<LazyRoute path="Dashboard" />} />
+          <Route path="/profile" element={<LazyRoute path="Profile" />} />
+          <Route path="/notifications" element={<LazyRoute path="Notifications" />} />
+          
+          {/* Rutas de Mentores */}
+          <Route path="/mentors">
+            <Route index element={<LazyRoute path="mentors/MentorList" />} />
+            <Route path="search" element={<LazyRoute path="mentors/MentorSearch" />} />
+            <Route path=":id" element={<LazyRoute path="mentors/MentorDetail" />} />
+          </Route>
+          
+          {/* Rutas de Calendario y Analytics */}
+          <Route path="/calendar" element={<LazyRoute path="CalendarPage" />} />
+          <Route path="/admin/calendar" element={<LazyRoute path="AdminCalendarPage" />} />
+          <Route path="/analytics" element={<LazyRoute path="AnalyticsDashboard" />} />
+          <Route path="/statistics" element={<LazyRoute path="StatisticsPage" />} />
+          
+          {/* Rutas de Mensajes */}
+          <Route path="/messages">
+            <Route index element={<LazyRoute path="messages/MessageList" />} />
+            <Route path=":id" element={<LazyRoute path="messages/MessageDetail" />} />
+          </Route>
+
+          {/* Rutas de Configuración */}
+          <Route path="/settings">
+            <Route index element={<LazyRoute path="settings/Settings" />} />
+            <Route path="notifications" element={<LazyRoute path="settings/NotificationSettings" />} />
+            <Route path="profile" element={<LazyRoute path="settings/ProfileSettings" />} />
+          </Route>
         </Route>
 
         {/* Ruta 404 */}
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<LazyRoute path="NotFound" />} />
       </Routes>
     </React.Suspense>
   );

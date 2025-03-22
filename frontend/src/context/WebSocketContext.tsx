@@ -1,77 +1,67 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { wsService } from '../services/websocket';
+import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 
 interface WebSocketContextType {
-    isConnected: boolean;
-    lastMessage: string | null;
-    connect: () => void;
-    disconnect: () => void;
+  socket: Socket | null;
+  isConnected: boolean;
+  lastPing: number;
 }
 
 const WebSocketContext = createContext<WebSocketContextType>({
-    isConnected: false,
-    lastMessage: null,
-    connect: () => {},
-    disconnect: () => {}
+  socket: null,
+  isConnected: false,
+  lastPing: 0,
 });
 
-export const useWebSocket = () => useContext(WebSocketContext);
-
 export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { isAuthenticated } = useAuth();
-    const [isConnected, setIsConnected] = useState(false);
-    const [lastMessage, setLastMessage] = useState<string | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [lastPing, setLastPing] = useState(0);
+  const { token } = useAuth();
 
-    const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!token) return;
 
-    useEffect(() => {
-        if (isAuthenticated) {
-            try {
-                connect();
-                setError(null);
-            } catch (err) {
-                const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-                console.error('[WebSocket] Connection error:', errorMessage);
-                setError(errorMessage);
-            }
-        } else {
-            disconnect();
-        }
+    const socketInstance = io(import.meta.env.VITE_WS_URL || 'ws://localhost:3001', {
+      auth: { token },
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
 
-        return () => {
-            disconnect();
-        };
-    }, [isAuthenticated]);
+    socketInstance.on('connect', () => {
+      setIsConnected(true);
+      console.log('WebSocket connected');
+    });
 
-    const connect = () => {
-        wsService.connect();
-        setIsConnected(true);
+    socketInstance.on('disconnect', () => {
+      setIsConnected(false);
+      console.log('WebSocket disconnected');
+    });
 
-        // Suscribirse a actualizaciones
-        const unsubscribeStats = wsService.subscribe('stats_update', (data) => {
-            setLastMessage(`Stats updated: ${data.activeUsers} active users`);
-        });
+    socketInstance.on('pong', () => {
+      setLastPing(Date.now());
+    });
 
-        return () => {
-            unsubscribeStats();
-        };
+    setSocket(socketInstance);
+
+    return () => {
+      socketInstance.disconnect();
     };
+  }, [token]);
 
-    const disconnect = () => {
-        wsService.disconnect();
-        setIsConnected(false);
-        setLastMessage(null);
-    };
+  return (
+    <WebSocketContext.Provider value={{ socket, isConnected, lastPing }}>
+      {children}
+    </WebSocketContext.Provider>
+  );
+};
 
-    return (
-        <WebSocketContext.Provider value={{ 
-            isConnected, 
-            lastMessage,
-            connect,
-            disconnect
-        }}>
-            {children}
-        </WebSocketContext.Provider>
-    );
+export const useWebSocket = () => {
+  const context = useContext(WebSocketContext);
+  if (context === undefined) {
+    throw new Error('useWebSocket must be used within a WebSocketProvider');
+  }
+  return context;
 };

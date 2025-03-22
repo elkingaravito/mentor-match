@@ -15,7 +15,10 @@ import {
 import { Match } from '../../types';
 import { useGetMenteeMatchesQuery, useGetMentorMatchesQuery } from '../../services/api';
 
-const MatchRecommendations: React.FC<{ userRole: 'mentor' | 'mentee' }> = ({ userRole }) => {
+const MatchRecommendations: React.FC<{ 
+    userRole: 'mentor' | 'mentee' | 'admin';
+    onMatchConnect?: (matchId: number) => Promise<void>;
+}> = ({ userRole, onMatchConnect }) => {
     const {
         data: menteeMatches,
         isLoading: isMenteeLoading,
@@ -47,6 +50,17 @@ const MatchRecommendations: React.FC<{ userRole: 'mentor' | 'mentee' }> = ({ use
             </Typography>
         );
     }
+
+    const validateMatch = (match: Match): boolean => {
+        const MIN_COMPATIBILITY = 0.6; // 60% minimum compatibility
+        const MIN_COMMON_INTERESTS = 2;
+        
+        return (
+            match.compatibility_score >= MIN_COMPATIBILITY &&
+            match.common_interests.length >= MIN_COMMON_INTERESTS &&
+            match.status === 'pending'
+        );
+    };
 
     return (
         <Card>
@@ -104,13 +118,28 @@ const MatchRecommendations: React.FC<{ userRole: 'mentor' | 'mentee' }> = ({ use
                                     </Box>
                                 }
                             />
-                            <Button
-                                variant="contained"
-                                size="small"
-                                sx={{ ml: 2, alignSelf: 'center' }}
-                            >
-                                Conectar
-                            </Button>
+                            <Box sx={{ ml: 2, alignSelf: 'center' }}>
+                                {userRole === 'admin' ? (
+                                    <Button
+                                        variant="contained"
+                                        size="small"
+                                        onClick={() => onMatchConnect?.(match.match_score.id)}
+                                        disabled={match.status !== 'pending'}
+                                    >
+                                        {match.status === 'pending' ? 'Aprobar Match' : 
+                                         match.status === 'accepted' ? 'Match Aprobado' : 'Match Rechazado'}
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="contained"
+                                        size="small"
+                                        onClick={() => onMatchConnect?.(match.match_score.id)}
+                                        disabled={match.status !== 'pending'}
+                                    >
+                                        Conectar
+                                    </Button>
+                                )}
+                            </Box>
                         </ListItem>
                     ))}
                 </List>

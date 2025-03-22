@@ -1,181 +1,166 @@
-import { useState, useCallback, useEffect } from "react";
-import { SessionService } from "../services/sessionService";
-import {
-    Session,
-    SessionCreate,
-    SessionUpdate,
-    SessionFilters,
-    SessionStats
-} from "../types/session";
+import { useCallback, useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "./redux";
+import { useNotifications } from "./useNotifications";
+import { useWebSocket } from "../context/WebSocketContext";
 import { useAuth } from "./useAuth";
+import {
+    useGetSessionsQuery,
+    useGetSessionByIdQuery,
+    useGetSessionStatsQuery,
+    useCreateSessionMutation,
+    useUpdateSessionMutation,
+    useDeleteSessionMutation,
+    useRescheduleSessionMutation,
+    useCompleteSessionMutation,
+    useCancelSessionMutation,
+} from "../services/sessionService";
+import {
+    setActiveSession,
+    setFilters,
+    clearSessions,
+} from "../store/slices/sessionSlice";
+import type { SessionWithParticipants, SessionFilters } from "../types/store";
+import type { SessionCreate, SessionUpdate } from "../types/api";
 
 export const useSession = (initialFilters?: SessionFilters) => {
-    const [sessions, setSessions] = useState<Session[]>([]);
-    const [stats, setStats] = useState<SessionStats | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [filters, setFilters] = useState<SessionFilters | undefined>(initialFilters);
+    const dispatch = useAppDispatch();
+    const { showNotification } = useNotifications();
+    const { subscribeToEvent } = useWebSocket();
     const { user } = useAuth();
 
-    const loadSessions = useCallback(async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const data = await SessionService.getSessions(filters);
-            setSessions(data);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Error loading sessions");
-        } finally {
-            setLoading(false);
-        }
-    }, [filters]);
+    const { filters } = useAppSelector(state => state.session);
 
-    const loadStats = useCallback(async () => {
-        try {
-            const data = await SessionService.getSessionStats();
-            setStats(data);
-        } catch (err) {
-            console.error("Error loading stats:", err);
-        }
-    }, []);
+    // RTK Query hooks
+    const { data: sessionsData, isLoading: isLoadingSessions, error: sessionsError } = 
+        useGetSessionsQuery(filters);
+    const { data: statsData, isLoading: isLoadingStats } = useGetSessionStatsQuery();
+    const [createSessionMutation] = useCreateSessionMutation();
+    const [updateSessionMutation] = useUpdateSessionMutation();
+    const [rescheduleSessionMutation] = useRescheduleSessionMutation();
+    const [completeSessionMutation] = useCompleteSessionMutation();
+    const [cancelSessionMutation] = useCancelSessionMutation();
 
+    // Suscribirse a actualizaciones de sesiones en tiempo real
     useEffect(() => {
-        loadSessions();
-    }, [loadSessions]);
-
-    useEffect(() => {
-        loadStats();
-    }, [loadStats]);
-
-    const createSession = useCallback(async (session: SessionCreate) => {
-        try {
-            setLoading(true);
-            setError(null);
-            const newSession = await SessionService.createSession(session);
-            setSessions(prev => [...prev, newSession]);
-            return newSession;
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Error creating session");
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    const updateSession = useCallback(async (sessionId: number, update: SessionUpdate) => {
-        try {
-            setLoading(true);
-            setError(null);
-            const updatedSession = await SessionService.updateSession(sessionId, update);
-            setSessions(prev =>
-                prev.map(session =>
-                    session.id === sessionId ? updatedSession : session
-                )
+        const unsubscribe = subscribeToEvent('session_update', (data) => {
+            showNotification(
+                'Actualización de Sesión',
+                `La sesión "${data.title}" ha sido actualizada`,
+                'session_update'
             );
-            return updatedSession;
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Error updating session");
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        });
 
-    const deleteSession = useCallback(async (sessionId: number) => {
+        return () => unsubscribe();
+    }, [subscribeToEvent, showNotification]);
+
+    const createSession = useCallback(async (sessionData: SessionCreate) => {
         try {
-            setLoading(true);
-            setError(null);
-            await SessionService.deleteSession(sessionId);
-            setSessions(prev => prev.filter(session => session.id !== sessionId));
+            const { data } = await createSessionMutation(sessionData).unwrap();
+            showNotification(
+                'Nueva Sesión',
+                `Se ha creado la sesión "${data.title}"`,
+                'session_scheduled'
+            );
+            return data;
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error deleting session");
+            const errorMessage = err instanceof Error ? err.message : "Error creating session";
+            showNotification('Error', errorMessage, 'system', { autoHide: false });
             throw err;
-        } finally {
-            setLoading(false);
         }
-    }, []);
+    }, [createSessionMutation, showNotification]);
 
-    const rescheduleSession = useCallback(async (
+    const handleUpdateSession = useCallback(async (sessionId: number, update: SessionUpdate) => {
+        try {
+            const { data } = await updateSessionMutation({ id: sessionId, update }).unwrap();
+            showNotification(
+                'Sesión Actualizada',
+                `Se ha actualizado la sesión "${data.title}"`,
+                'session_update'
+            );
+            return data;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : "Error updating session";
+            showNotification('Error', errorMessage, 'system', { autoHide: false });
+            throw err;
+        }
+    }, [updateSessionMutation, showNotification]);
+
+    const handleRescheduleSession = useCallback(async (
         sessionId: number,
-        newStartTime: string,
-        newEndTime: string
+        startTime: string,
+        endTime: string
     ) => {
         try {
-            setLoading(true);
-            setError(null);
-            const updatedSession = await SessionService.rescheduleSession(
-                sessionId,
-                newStartTime,
-                newEndTime
+            const { data } = await rescheduleSessionMutation({
+                id: sessionId,
+                startTime,
+                endTime
+            }).unwrap();
+            showNotification(
+                'Sesión Reprogramada',
+                `La sesión "${data.title}" ha sido reprogramada`,
+                'session_update'
             );
-            setSessions(prev =>
-                prev.map(session =>
-                    session.id === sessionId ? updatedSession : session
-                )
-            );
-            return updatedSession;
+            return data;
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error rescheduling session");
+            const errorMessage = err instanceof Error ? err.message : "Error rescheduling session";
+            showNotification('Error', errorMessage, 'system', { autoHide: false });
             throw err;
-        } finally {
-            setLoading(false);
         }
-    }, []);
+    }, [rescheduleSessionMutation, showNotification]);
 
-    const completeSession = useCallback(async (sessionId: number, feedback?: string) => {
+    const handleCompleteSession = useCallback(async (sessionId: number, feedback?: string) => {
         try {
-            setLoading(true);
-            setError(null);
-            const updatedSession = await SessionService.markSessionComplete(sessionId, feedback);
-            setSessions(prev =>
-                prev.map(session =>
-                    session.id === sessionId ? updatedSession : session
-                )
+            const { data } = await completeSessionMutation({ id: sessionId, feedback }).unwrap();
+            showNotification(
+                'Sesión Completada',
+                `La sesión "${data.title}" ha sido completada`,
+                'session_update'
             );
-            await loadStats();
-            return updatedSession;
+            return data;
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error completing session");
+            const errorMessage = err instanceof Error ? err.message : "Error completing session";
+            showNotification('Error', errorMessage, 'system', { autoHide: false });
             throw err;
-        } finally {
-            setLoading(false);
         }
-    }, [loadStats]);
+    }, [completeSessionMutation, showNotification]);
 
-    const cancelSession = useCallback(async (sessionId: number, reason?: string) => {
+    const handleCancelSession = useCallback(async (sessionId: number, reason?: string) => {
         try {
-            setLoading(true);
-            setError(null);
-            const updatedSession = await SessionService.cancelSession(sessionId, reason);
-            setSessions(prev =>
-                prev.map(session =>
-                    session.id === sessionId ? updatedSession : session
-                )
+            const { data } = await cancelSessionMutation({ id: sessionId, reason }).unwrap();
+            showNotification(
+                'Sesión Cancelada',
+                `La sesión "${data.title}" ha sido cancelada`,
+                'session_update'
             );
-            await loadStats();
-            return updatedSession;
+            return data;
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error cancelling session");
+            const errorMessage = err instanceof Error ? err.message : "Error cancelling session";
+            showNotification('Error', errorMessage, 'system', { autoHide: false });
             throw err;
-        } finally {
-            setLoading(false);
         }
-    }, [loadStats]);
+    }, [cancelSessionMutation, showNotification]);
 
     return {
-        sessions,
-        stats,
-        loading,
-        error,
+        // Estado
+        sessions: sessionsData?.data || [],
+        stats: statsData?.data,
         filters,
-        setFilters,
+        isLoading: isLoadingSessions || isLoadingStats,
+        error: sessionsError,
+        
+        // Acciones
+        setFilters: (newFilters: SessionFilters) => dispatch(setFilters(newFilters)),
+        setActiveSession: (session: SessionWithParticipants | null) => 
+            dispatch(setActiveSession(session)),
         createSession,
-        updateSession,
-        deleteSession,
-        rescheduleSession,
-        completeSession,
-        cancelSession,
-        refresh: loadSessions,
+        updateSession: handleUpdateSession,
+        rescheduleSession: handleRescheduleSession,
+        completeSession: handleCompleteSession,
+        cancelSession: handleCancelSession,
+        clearSessions: () => dispatch(clearSessions()),
+        
+        // Utilidades
         isAdmin: user?.role === "admin",
         userId: user?.id
     };

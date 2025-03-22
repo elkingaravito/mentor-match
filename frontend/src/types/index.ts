@@ -1,45 +1,34 @@
-// Re-export all types
+// Export all types
 export * from './api';
+export * from './store';
+export * from './common';
 export * from './matching';
 export * from './session';
 export * from './notification';
+export * from './message';
+export * from './settings';
 
-// Additional shared types
-export interface Theme {
-    mode: 'light' | 'dark';
-    primary: string;
-    secondary: string;
-}
+// Re-export specific types that are commonly used
+export type {
+    AppState,
+    Theme,
+    Status,
+    ViewMode,
+    DateRange,
+    PaginationState,
+    FilterState,
+} from './common';
 
-export interface UserPreferences {
-    theme: Theme;
-    notifications: {
-        email: boolean;
-        push: boolean;
-        inApp: boolean;
-    };
-    availability: {
-        timezone: string;
-        schedule: {
-            [key: string]: {
-                start: string;
-                end: string;
-            }[];
-        };
-    };
-}
+export type {
+    User,
+    AuthResponse,
+    ApiResponse,
+    ApiError,
+} from './api';
 
-export interface AppState {
-    isInitialized: boolean;
-    isLoading: boolean;
-    error: string | null;
-}
-
-// Utility types
-export type Optional<T> = T | undefined;
-export type Nullable<T> = T | null;
-export type AsyncState<T> = {
-    data: T | null;
-    isLoading: boolean;
-    error: string | null;
-};
+export type {
+    RootState,
+    MessageState,
+    NotificationState,
+    SessionState,
+} from './store';

@@ -31,6 +31,23 @@ export interface MatchScore {
     updated_at: string;
 }
 
+export interface Match {
+    mentor: {
+        id: number;
+        name: string;
+        rating?: number;
+        total_sessions?: number;
+    };
+    mentee: {
+        id: number;
+        name: string;
+    };
+    compatibility_score: number;
+    common_interests: string[];
+    status: 'pending' | 'accepted' | 'rejected';
+    match_score: MatchScore;
+}
+
 export interface MatchFeedback {
     rating: number;
     feedback?: string;

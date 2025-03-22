@@ -1,5 +1,6 @@
-import { AppBar, Toolbar, Typography, IconButton } from '@mui/material';
-import { Menu as MenuIcon } from '@mui/icons-material';
+import { AppBar, Toolbar, Typography, IconButton, Badge } from '@mui/material';
+import { Menu as MenuIcon, Notifications as NotificationsIcon } from '@mui/icons-material';
+import { useGetNotificationsQuery } from '../services/api';
 
 const Header = () => {
   return (
@@ -17,6 +18,11 @@ const Header = () => {
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           Mentor Match
         </Typography>
+        <IconButton color="inherit">
+          <Badge badgeContent={0} color="error">
+            <NotificationsIcon />
+          </Badge>
+        </IconButton>
       </Toolbar>
     </AppBar>
   );

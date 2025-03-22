@@ -1,34 +1,46 @@
-import { useState } from 'react';
-import { Box, Button, TextField, Typography, Paper, Alert } from '@mui/material';
+import { Box, Button, TextField, Typography, Paper, Alert, Link, CircularProgress } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
+import { useFormik } from 'formik';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../components/feedback/Toast';
+import { loginSchema } from '../validations/auth';
 
 const Login = () => {
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const { showToast } = useToast();
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setError('');
+  const formik = useFormik({
+    initialValues: {
+      email: '',
+      password: '',
+    },
+    validationSchema: loginSchema,
+    onSubmit: async (values, { setSubmitting, setStatus }) => {
+      try {
+        // Simulamos un delay para mostrar el loading state
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-    try {
-      // En un entorno real, esto sería una llamada a la API
-      // Por ahora, simulamos un login exitoso con datos mock
-      const mockToken = 'mock-jwt-token';
-      const mockUser = {
-        id: 1,
-        name: 'Test User',
-        email: email,
-        role: 'mentor'
-      };
+        // En un entorno real, esto sería una llamada a la API
+        const mockToken = 'mock-jwt-token';
+        const mockUser = {
+          id: 1,
+          name: 'Test User',
+          email: values.email,
+          role: 'mentor'
+        };
 
-      login(mockToken, mockUser);
-    } catch (err) {
-      setError('Failed to login. Please check your credentials.');
-      console.error('Login error:', err);
-    }
-  };
+        login(mockToken, mockUser);
+        showToast('Welcome back!', 'success');
+      } catch (err) {
+        const errorMessage = 'Failed to login. Please check your credentials.';
+        setStatus(errorMessage);
+        showToast(errorMessage, 'error');
+        console.error('Login error:', err);
+      } finally {
+        setSubmitting(false);
+      }
+    },
+  });
 
   return (
     <Box
@@ -53,35 +65,60 @@ const Login = () => {
         <Typography variant="h5" component="h1" gutterBottom>
           Login to Mentor Match
         </Typography>
-        {error && <Alert severity="error">{error}</Alert>}
-        <form onSubmit={handleSubmit}>
+        
+        {formik.status && (
+          <Alert severity="error" sx={{ mb: 2 }}>{formik.status}</Alert>
+        )}
+        {formik.isSubmitting && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+            <CircularProgress size={24} />
+          </Box>
+        )}
+        
+        <form onSubmit={formik.handleSubmit}>
           <TextField
             fullWidth
+            id="email"
+            name="email"
             label="Email"
             margin="normal"
             type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={formik.values.email}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.email && Boolean(formik.errors.email)}
+            helperText={formik.touched.email && formik.errors.email}
           />
           <TextField
             fullWidth
+            id="password"
+            name="password"
             label="Password"
             margin="normal"
             type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={formik.values.password}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.password && Boolean(formik.errors.password)}
+            helperText={formik.touched.password && formik.errors.password}
           />
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3 }}
+            disabled={formik.isSubmitting}
           >
-            Login
+            {formik.isSubmitting ? 'Signing in...' : 'Login'}
           </Button>
         </form>
+
+        <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+          Don't have an account?{' '}
+          <Link component={RouterLink} to="/register">
+            Sign up
+          </Link>
+        </Typography>
       </Paper>
     </Box>
   );

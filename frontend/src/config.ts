@@ -39,10 +39,20 @@ export const API_ENDPOINTS = {
     },
     users: {
         profile: '/users/profile',
-        mentors: '/users/mentors',
-        mentees: '/users/mentees',
         mentorProfile: '/users/mentor-profile',
         menteeProfile: '/users/mentee-profile',
+    },
+    mentors: {
+        base: '/mentors',
+        list: '/mentors',
+        search: '/mentors/search',
+        byId: (id: string) => `/mentors/${id}`,
+    },
+    mentees: {
+        base: '/mentees',
+        list: '/mentees',
+        search: '/mentees/search',
+        byId: (id: string) => `/mentees/${id}`,
     },
     statistics: {
         user: '/statistics/user',
@@ -61,5 +71,17 @@ export const API_ENDPOINTS = {
     matching: {
         menteeMatches: '/matching/mentee',
         mentorMatches: '/matching/mentor',
+    },
+    messages: {
+        base: '/messages',
+        conversations: '/messages/conversations',
+        byId: (id: string) => `/messages/${id}`,
+    },
+    settings: {
+        base: '/settings',
+        profile: '/settings/profile',
+        notifications: '/settings/notifications',
+        security: '/settings/security',
+        preferences: '/settings/preferences',
     },
 };
