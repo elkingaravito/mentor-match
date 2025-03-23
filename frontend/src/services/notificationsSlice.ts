@@ -1,29 +1,15 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { baseApi } from './baseApi';
 import type { Notification } from '@/types/api';
 
-// Define the notifications API
-const notificationsApi = createApi({
-  reducerPath: 'notificationsApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: '/api',
-    credentials: 'include',
-    prepareHeaders: (headers) => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+// Extend the base API with notifications endpoints
+export const notificationsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getNotifications: builder.query<Notification[], void>({
       query: () => 'notifications',
+      providesTags: ['Notifications'],
     }),
   }),
 });
 
-// Export the hook
+// Export the hooks
 export const { useGetNotificationsQuery } = notificationsApi;
-
-// Export the API for the store
-export { notificationsApi };

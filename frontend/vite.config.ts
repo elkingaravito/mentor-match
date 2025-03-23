@@ -57,6 +57,10 @@ export default defineConfig(({ mode }) => {
           },
         },
       },
+      commonjsOptions: {
+        include: [/node_modules/],
+        transformMixedEsModules: true,
+      },
     },
     optimizeDeps: {
       include: [
@@ -67,12 +71,6 @@ export default defineConfig(({ mode }) => {
         '@reduxjs/toolkit/query/react'
       ],
       exclude: ['@reduxjs/toolkit'],
-    },
-    build: {
-      commonjsOptions: {
-        include: [/node_modules/],
-        transformMixedEsModules: true,
-      },
     },
   };
 });

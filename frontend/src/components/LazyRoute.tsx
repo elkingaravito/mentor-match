@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import LoadingScreen from './feedback/LoadingScreen';
-import ErrorScreen from './feedback/ErrorScreen';
 import ErrorBoundary from './ErrorBoundary';
+import ErrorScreen from './feedback/ErrorScreen';
 
 interface LazyRouteProps {
   path: string;
@@ -44,7 +44,11 @@ const pageModules = {
 type PagePath = keyof typeof pageModules;
 
 export const LazyRoute = ({ path }: LazyRouteProps) => {
-  const Component = pageModules[path as PagePath] || ErrorScreen;
+  const Component = pageModules[path as PagePath];
+  
+  if (!Component) {
+    return <ErrorScreen error={new Error(`Page not found: ${path}`)} />;
+  }
 
   return (
     <ErrorBoundary>

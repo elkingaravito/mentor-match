@@ -1,7 +1,7 @@
-import { api } from '../api';
+import { baseApi } from '../baseApi';
 import { AuthResponse, LoginCredentials, ApiResponse, User } from '../../types/api';
 
-export const authApi = api.injectEndpoints({
+export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation<AuthResponse, LoginCredentials>({
       query: (credentials) => ({

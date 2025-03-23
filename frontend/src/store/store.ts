@@ -1,12 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { notificationsApi } from '../services/notificationsSlice';
+import { baseApi } from '../services/baseApi';
 
-const store = configureStore({
+export const store = configureStore({
   reducer: {
-    [notificationsApi.reducerPath]: notificationsApi.reducer,
+    [baseApi.reducerPath]: baseApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(notificationsApi.middleware),
+    getDefaultMiddleware().concat(baseApi.middleware),
 });
 
-export { store };
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;

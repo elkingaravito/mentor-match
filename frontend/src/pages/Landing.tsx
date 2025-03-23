@@ -6,7 +6,7 @@ import {
   Timeline as TimelineIcon,
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
-import { FadeIn, SlideIn } from '../components/animations';
+import { FadeIn, SlideIn, ScaleIn } from '../components/animations';
 
 const features = [
   {
@@ -36,8 +36,6 @@ const Landing = () => {
 
   return (
     <Box>
-import { FadeIn, SlideIn, ScaleIn } from '../components/animations';
-
       {/* Hero Section */}
       <Box 
         sx={{ 
@@ -97,38 +95,39 @@ import { FadeIn, SlideIn, ScaleIn } from '../components/animations';
       {/* Features Section */}
       <FadeIn delay={0.3}>
         <Container maxWidth="lg" sx={{ py: 8 }}>
-        <Typography variant="h3" component="h2" textAlign="center" gutterBottom>
-          Why Choose Mentor Match?
-        </Typography>
-        <Grid container spacing={4} sx={{ mt: 4 }}>
-          {features.map((feature, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card 
-                sx={{ 
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                  p: 2,
-                }}
-              >
-                <Box sx={{ color: 'primary.main', mb: 2 }}>
-                  {feature.icon}
-                </Box>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    {feature.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {feature.description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
+          <Typography variant="h3" component="h2" textAlign="center" gutterBottom>
+            Why Choose Mentor Match?
+          </Typography>
+          <Grid container spacing={4} sx={{ mt: 4 }}>
+            {features.map((feature, index) => (
+              <Grid item xs={12} sm={6} md={3} key={index}>
+                <Card 
+                  sx={{ 
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    p: 2,
+                  }}
+                >
+                  <Box sx={{ color: 'primary.main', mb: 2 }}>
+                    {feature.icon}
+                  </Box>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      {feature.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {feature.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </FadeIn>
 
       {/* CTA Section */}
       <Box sx={{ bgcolor: 'grey.100', py: 8 }}>

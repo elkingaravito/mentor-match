@@ -9,7 +9,7 @@ interface ErrorScreenProps {
   onReset?: () => void;
 }
 
-export const ErrorScreen: React.FC<ErrorScreenProps> = ({ error, onReset }) => {
+const ErrorScreen: React.FC<ErrorScreenProps> = ({ error, onReset }) => {
   const navigate = useNavigate();
 
   const handleReset = () => {
@@ -76,3 +76,5 @@ export const ErrorScreen: React.FC<ErrorScreenProps> = ({ error, onReset }) => {
     </Container>
   );
 };
+
+export default ErrorScreen;

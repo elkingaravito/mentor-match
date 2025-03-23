@@ -1,5 +1,5 @@
 import React from 'react';
-import { ErrorScreen } from './feedback/ErrorScreen';
+import ErrorScreen from './feedback/ErrorScreen';
 import * as Sentry from '@sentry/react';
 import { useLocation } from 'react-router-dom';
 

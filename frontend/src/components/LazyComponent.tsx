@@ -1,6 +1,7 @@
 import React from 'react';
 import LoadingScreen from './feedback/LoadingScreen';
 import ErrorScreen from './feedback/ErrorScreen';
+import ErrorBoundary from './ErrorBoundary';
 
 interface LazyComponentProps {
   component: () => Promise<{ default: React.ComponentType<any> }>;
