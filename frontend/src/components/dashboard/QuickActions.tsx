@@ -1,12 +1,20 @@
+import React, { useState, useEffect, useMemo } from 'react';
 import { Paper, Typography, Button, Stack, Box } from '@mui/material';
 import {
   Search as SearchIcon,
   CalendarToday as CalendarIcon,
   Message as MessageIcon,
+  Group as GroupIcon,
+  CheckCircle as CheckCircleIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useMemo, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../components/feedback/Toast';
+
+// Types
+type UserRole = 'mentor' | 'mentee' | 'admin';
 
 interface QuickAction {
   title: string;
@@ -15,175 +23,152 @@ interface QuickAction {
   color: 'primary' | 'secondary' | 'info';
 }
 
+// Component
 const QuickActions: React.FC = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  const { showToast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
 
-  const styles = {
-    container: {
-      p: 2,
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column' as const
-    },
-    button: {
-      position: 'relative',
-      overflow: 'hidden',
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: 'linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent)',
-        transform: 'translateX(-100%)',
-        transition: 'transform 0.3s',
+  // Get user role
+  const userRole = user?.role as UserRole || 'mentee';
+
+  // Define actions based on role
+  const actions = useMemo(() => {
+    const baseActions: QuickAction[] = [
+      {
+        title: 'Find a Mentor',
+        icon: SearchIcon,
+        path: '/mentors',
+        color: 'primary',
       },
-      '&:hover::after': {
-        transform: 'translateX(100%)',
+      {
+        title: 'Messages',
+        icon: MessageIcon,
+        path: '/messages',
+        color: 'info',
       },
+      {
+        title: 'Settings',
+        icon: SettingsIcon,
+        path: '/settings',
+        color: 'secondary',
+      }
+    ];
+
+    if (userRole === 'admin') {
+      return [
+        {
+          title: 'Manage Mentors',
+          icon: GroupIcon,
+          path: '/admin/mentors',
+          color: 'primary',
+        },
+        {
+          title: 'Review Matches',
+          icon: CheckCircleIcon,
+          path: '/admin/matches',
+          color: 'secondary',
+        },
+        {
+          title: 'System Settings',
+          icon: SettingsIcon,
+          path: '/admin/settings',
+          color: 'info',
+        }
+      ];
     }
-  };
 
-  const actions: QuickAction[] = useMemo(() => {
-  const baseActions = [
-    {
-      title: 'Find a Mentor',
-      icon: SearchIcon,
-      path: '/mentors',
-      color: 'primary',
-    },
-    {
-      title: 'Schedule Session',
-      icon: CalendarIcon,
-      path: '/calendar',
-      color: 'secondary',
-    },
-    {
-      title: 'Send Message',
-      icon: MessageIcon,
-      path: '/messages',
-      color: 'info',
-    },
-  ];
+    if (userRole === 'mentor') {
+      baseActions.push({
+        title: 'My Mentees',
+        icon: GroupIcon,
+        path: '/mentees',
+        color: 'primary',
+      });
+    } else {
+      baseActions.push({
+        title: 'Schedule Session',
+        icon: CalendarIcon,
+        path: '/calendar',
+        color: 'secondary',
+      });
+    }
 
-  const adminActions: QuickAction[] = [
-    {
-      title: 'Manage Mentors',
-      icon: GroupIcon,
-      path: '/admin/mentors',
-      color: 'primary',
-    },
-    {
-      title: 'Review Matches',
-      icon: CheckCircleIcon,
-      path: '/admin/matches',
-      color: 'secondary',
-    },
-    {
-      title: 'System Settings',
-      icon: SettingsIcon,
-      path: '/admin/settings',
-      color: 'info',
-    },
-  ];
+    return baseActions;
+  }, [userRole]);
 
-  return userRole === 'admin' ? adminActions : baseActions;
-}, [userRole]);
-
-  const handleNavigate = useCallback((path: string) => {
+  // Navigation handler
+  const handleNavigate = (path: string) => {
     if (path.startsWith('/admin') && userRole !== 'admin') {
-      toast.error('No tienes permisos para acceder a esta sección');
+      showToast('You do not have permission to access this section', 'error');
       return;
     }
     navigate(path);
-  }, [navigate, userRole]);
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
   };
 
-  const buttonVariants = {
-    hidden: { x: -20, opacity: 0 },
-    visible: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        type: 'spring',
-        stiffness: 100,
-        damping: 10,
-      },
-    },
-    hover: {
-      scale: 1.02,
-      transition: {
-        type: 'spring',
-        stiffness: 400,
-        damping: 10,
-      },
-    },
-    tap: {
-      scale: 0.98,
-    },
-  };
+  // Simulate loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <Paper 
-      component={motion.div}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      sx={styles.container}
+      sx={{
+        p: 2,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
     >
       <Typography variant="h6" component="h2" gutterBottom>
         Quick Actions
       </Typography>
+      
       <Box sx={{ flex: 1 }}>
-        <Stack 
-          spacing={2}
-          component={motion.div}
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <AnimatePresence>
-            {actions.map((action) => {
+        <Stack spacing={2}>
+          {isLoading ? (
+            // Loading state
+            Array(3).fill(0).map((_, index) => (
+              <Box 
+                key={index} 
+                sx={{ 
+                  height: 48, 
+                  bgcolor: 'action.hover', 
+                  borderRadius: 1 
+                }}
+              />
+            ))
+          ) : (
+            // Actions buttons
+            actions.map((action) => {
               const Icon = action.icon;
               return (
                 <motion.div
                   key={action.title}
-                  variants={buttonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   <Button
                     variant="outlined"
                     color={action.color}
-                    startIcon={
-                      <motion.div
-                        initial={{ rotate: 0 }}
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <Icon />
-                      </motion.div>
-                    }
+                    startIcon={<Icon />}
                     onClick={() => handleNavigate(action.path)}
                     fullWidth
-                    sx={styles.button}
                   >
                     {action.title}
                   </Button>
                 </motion.div>
               );
-            })}
-          </AnimatePresence>
+            })
+          )}
         </Stack>
       </Box>
     </Paper>

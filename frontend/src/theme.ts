@@ -1,4 +1,5 @@
 import { createTheme, Theme } from '@mui/material/styles';
+import { createAnimations } from './theme/animations';
 
 declare module '@mui/material/styles' {
   interface Palette {
@@ -9,7 +10,7 @@ declare module '@mui/material/styles' {
   }
 }
 
-export const theme = createTheme({
+const baseTheme = createTheme({
   palette: {
     primary: {
       main: '#2196f3',
@@ -81,6 +82,18 @@ export const theme = createTheme({
         root: {
           textTransform: 'none',
           borderRadius: 8,
+          '&:hover': {
+            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
+          },
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+          },
         },
       },
     },
@@ -89,6 +102,10 @@ export const theme = createTheme({
         root: {
           borderRadius: 12,
           boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
+          transition: 'box-shadow 0.3s ease-in-out',
+          '&:hover': {
+            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
+          },
         },
       },
     },
@@ -96,6 +113,10 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 12,
+          transition: 'box-shadow 0.3s ease-in-out',
+          '&:hover': {
+            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
+          },
         },
       },
     },
@@ -133,6 +154,11 @@ export const theme = createTheme({
     '0px 24px 32px rgba(0, 0, 0, 0.05)',
     ...Array(19).fill('none'),
   ],
+});
+
+export const theme = createTheme({
+  ...baseTheme,
+  animations: createAnimations(baseTheme),
 });
 
 export type AppTheme = Theme;

@@ -8,8 +8,8 @@ import {
   Avatar, 
   Button, 
   Box,
-  CircularProgress
 } from '@mui/material';
+import { motion } from 'framer-motion';
 import { Event as EventIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -65,26 +65,6 @@ const UpcomingSessions: React.FC = () => {
     navigate('/calendar');
   }, [navigate]);
 
-  if (isLoading) {
-    return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <CircularProgress size={24} />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <EmptyState
-        icon={EventIcon}
-        title="Error Loading Sessions"
-        description="There was a problem loading your sessions. Please try again later."
-        actionLabel="Retry"
-        onAction={() => window.location.reload()}
-      />
-    );
-  }
-
   const upcomingSessions = useMemo(() => {
     const sessions = (sessionsData as SessionsResponse)?.data || [];
     return sessions
@@ -92,6 +72,23 @@ const UpcomingSessions: React.FC = () => {
       .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
       .slice(0, 5);
   }, [sessionsData]);
+
+  if (isLoading || error) {
+    return (
+      <EmptyState
+        icon={EventIcon}
+        title={isLoading ? "Loading Sessions" : "Error Loading Sessions"}
+        description={
+          isLoading 
+            ? "Please wait while we fetch your upcoming sessions..." 
+            : "There was a problem loading your sessions. Please try again later."
+        }
+        loading={isLoading}
+        error={!!error}
+        retry={() => window.location.reload()}
+      />
+    );
+  }
 
   if (upcomingSessions.length === 0) {
     return (
@@ -101,12 +98,19 @@ const UpcomingSessions: React.FC = () => {
         description="You don't have any sessions scheduled. Why not book one now?"
         actionLabel="Schedule Session"
         onAction={handleScheduleSession}
+        variant="card"
       />
     );
   }
 
   return (
-    <Paper sx={styles.container}>
+    <Paper 
+      component={motion.div}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      sx={styles.container}
+    >
       <Box sx={styles.header}>
         <Typography variant="h6" component="h2">
           Upcoming Sessions
@@ -121,23 +125,29 @@ const UpcomingSessions: React.FC = () => {
       </Box>
 
       <List sx={{ p: 0 }}>
-        {upcomingSessions.map((session) => (
-          <ListItem 
+        {upcomingSessions.map((session, index) => (
+          <motion.div
             key={session.id}
-            sx={styles.listItem}
-            button
-            onClick={() => navigate(`/sessions/${session.id}`)}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.1 }}
           >
-            <ListItemAvatar>
-              <Avatar sx={{ bgcolor: 'primary.main' }}>
-                {session.mentorId.toString()[0].toUpperCase()}
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText
-              primary={session.title || `Session with Mentor #${session.mentorId}`}
-              secondary={format(new Date(session.startTime), 'PPp')}
-            />
-          </ListItem>
+            <ListItem 
+              sx={styles.listItem}
+              button
+              onClick={() => navigate(`/sessions/${session.id}`)}
+            >
+              <ListItemAvatar>
+                <Avatar sx={{ bgcolor: 'primary.main' }}>
+                  {session.mentorId.toString()[0].toUpperCase()}
+                </Avatar>
+              </ListItemAvatar>
+              <ListItemText
+                primary={session.title || `Session with Mentor #${session.mentorId}`}
+                secondary={format(new Date(session.startTime), 'PPp')}
+              />
+            </ListItem>
+          </motion.div>
         ))}
       </List>
     </Paper>

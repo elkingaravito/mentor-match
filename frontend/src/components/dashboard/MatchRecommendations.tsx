@@ -1,3 +1,4 @@
+import React, { useMemo, useCallback } from 'react';
 import { 
   Paper, 
   Typography, 
@@ -27,8 +28,6 @@ interface MatchesResponse {
   data: Match[];
   status: string;
 }
-
-import { useMemo, useCallback } from 'react';
 
 const MatchRecommendations: React.FC = () => {
   // Styles
@@ -66,39 +65,23 @@ const MatchRecommendations: React.FC = () => {
       gap: 1
     }
   };
+
+  // Navigation
   const navigate = useNavigate();
+  
+  // Data fetching - this hook must be called unconditionally
   const { data: matchesData, isLoading, error } = useGetMentorMatchesQuery();
   
-  if (isLoading) {
-    return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <CircularProgress size={24} />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <EmptyState
-        icon={PeopleIcon}
-        title="Error Loading Matches"
-        description="There was a problem loading your matches. Please try again later."
-        actionLabel="Retry"
-        onAction={() => window.location.reload()}
-      />
-    );
-  }
-
-  // Memoized data processing
+  // Memoized data processing - always call these hooks
   const pendingMatches = useMemo(() => {
     const matches = (matchesData as MatchesResponse)?.data || [];
     return matches
       .filter(match => match.status === 'pending')
       .sort((a, b) => b.score - a.score)
-      .slice(0, 3); // Limit to 3 matches directly in the processing
+      .slice(0, 3);
   }, [matchesData]);
 
-  // Handlers
+  // Handlers - always define these callbacks
   const handleViewAll = useCallback(() => {
     navigate('/matches');
   }, [navigate]);
@@ -107,47 +90,66 @@ const MatchRecommendations: React.FC = () => {
     navigate('/profile');
   }, [navigate]);
 
-  if (pendingMatches.length === 0) {
-    return (
-      <EmptyState
-        icon={PeopleIcon}
-        title="No Matches Yet"
-        description="We're working on finding the perfect mentor match for you."
-        actionLabel="Update Preferences"
-        onAction={() => navigate('/profile')}
-      />
-    );
-  }
+  const handleNavigateToMatch = useCallback((matchId: string) => {
+    navigate(`/matches/${matchId}`);
+  }, [navigate]);
 
-  return (
-    <Paper sx={styles.container}>
-      <Box sx={styles.header}>
-        <Typography variant="h6" component="h2">
-          Recommended Matches
-        </Typography>
-        <Button 
-          variant="outlined" 
-          size="small"
-          onClick={handleViewAll}
-        >
-          View All
-        </Button>
-      </Box>
-
-      {pendingMatches.length === 0 ? (
-        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Typography color="text.secondary">
-            No recommendations available
-          </Typography>
+  // Rendering logic 
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <Box sx={{ p: 2, textAlign: 'center' }}>
+          <CircularProgress size={24} />
         </Box>
-      ) : (
+      );
+    }
+
+    if (error) {
+      return (
+        <EmptyState
+          icon={PeopleIcon}
+          title="Error Loading Matches"
+          description="There was a problem loading your matches. Please try again later."
+          actionLabel="Retry"
+          onAction={() => window.location.reload()}
+        />
+      );
+    }
+
+    if (pendingMatches.length === 0) {
+      return (
+        <EmptyState
+          icon={PeopleIcon}
+          title="No Matches Yet"
+          description="We're working on finding the perfect mentor match for you."
+          actionLabel="Update Preferences"
+          onAction={handleUpdatePreferences}
+        />
+      );
+    }
+
+    return (
+      <>
+        <Box sx={styles.header}>
+          <Typography variant="h6" component="h2">
+            Recommended Matches
+          </Typography>
+          <Button 
+            variant="outlined" 
+            size="small"
+            onClick={handleViewAll}
+          >
+            View All
+          </Button>
+        </Box>
+
         <List sx={{ p: 0 }}>
           {pendingMatches.map((match) => (
             <ListItem 
               key={match.id}
               sx={styles.listItem}
               button
-              onClick={() => navigate(`/matches/${match.id}`)}
+              onClick={() => handleNavigateToMatch(match.id)}
             >
               <ListItemAvatar>
                 <Avatar sx={{ bgcolor: 'primary.main' }}>
@@ -177,7 +179,14 @@ const MatchRecommendations: React.FC = () => {
             </ListItem>
           ))}
         </List>
-      )}
+      </>
+    );
+  };
+
+  // Main render - always return a Paper component
+  return (
+    <Paper sx={styles.container}>
+      {renderContent()}
     </Paper>
   );
 };

@@ -17,27 +17,11 @@ interface StatCardProps {
   color: 'primary' | 'success' | 'warning' | 'info';
 }
 
-interface Statistics {
-  totalSessions: number;
-  completedSessions: number;
-  upcomingSessions: number;
-  averageRating: number;
-  // Admin specific stats
-  totalMentors?: number;
-  totalMentees?: number;
-  activeMatches?: number;
-  matchSuccessRate?: number;
-  pendingApprovals?: number;
-}
+import { Statistics, ApiResponse } from '../../types/api';
 
 interface DashboardStatsProps {
   userRole: 'admin' | 'mentor' | 'mentee';
   timeRange?: 'week' | 'month' | 'year' | 'all';
-}
-
-interface StatisticsResponse {
-  data: Statistics;
-  status: string;
 }
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color }) => (
@@ -72,7 +56,21 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color }) 
 );
 
 const DashboardStats: React.FC<DashboardStatsProps> = ({ userRole, timeRange = 'all' }) => {
-  const { data: statistics, isLoading, error } = useGetUserStatisticsQuery();
+  const result = useGetUserStatisticsQuery();
+  const { data: statistics, isLoading, error, isSuccess, isError } = result;
+  
+  console.group('DashboardStats');
+  console.log('Query Result:', { 
+    data: statistics, 
+    isLoading, 
+    error,
+    isSuccess,
+    isError,
+    userRole,
+    timeRange
+  });
+  console.log('Raw Result:', result);
+  console.groupEnd();
 
   const cardVariants = {
     hidden: { opacity: 0, scale: 0.8 },
@@ -89,7 +87,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ userRole, timeRange = '
   };
 
   const stats = useMemo(() => {
-    const data = (statistics as StatisticsResponse)?.data || {
+    const data = statistics?.data?.data || {
       totalSessions: 0,
       completedSessions: 0,
       upcomingSessions: 0,
@@ -161,27 +159,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ userRole, timeRange = '
     return baseStats;
   }, [statistics]);
 
-  if (isLoading) {
-    return (
-      <Box sx={{ p: 2, textAlign: 'center', minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <CircularProgress size={24} />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <EmptyState
-        icon={TrendingUpIcon}
-        title="Error Loading Statistics"
-        description="There was a problem loading your statistics. Please try again later."
-        actionLabel="Retry"
-        onAction={() => window.location.reload()}
-      />
-    );
-  }
-
-  return (
+  const statsContent = (
     <Box sx={{ width: '100%' }}>
       <Grid container spacing={3}>
         {stats.map((stat, index) => (
@@ -206,6 +184,45 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ userRole, timeRange = '
       </Grid>
     </Box>
   );
+
+  if (isLoading) {
+    console.log('DashboardStats: Loading state');
+    return (
+      <EmptyState
+        icon={TrendingUpIcon}
+        title="Statistics"
+        description="Loading your statistics..."
+        loading={true}
+      />
+    );
+  }
+
+  if (error) {
+    console.error('DashboardStats: Error state', error);
+    return (
+      <EmptyState
+        icon={TrendingUpIcon}
+        title="Error Loading Statistics"
+        description="There was a problem loading your statistics"
+        error={true}
+        retry={() => window.location.reload()}
+      />
+    );
+  }
+
+  if (!statistics?.data?.data) {
+    console.warn('DashboardStats: No data available');
+    return (
+      <EmptyState
+        icon={TrendingUpIcon}
+        title="No Statistics Available"
+        description="No statistics data is currently available"
+      />
+    );
+  }
+
+  console.log('DashboardStats: Rendering content with data:', statistics.data.data);
+  return statsContent;
 };
 
 export default DashboardStats;

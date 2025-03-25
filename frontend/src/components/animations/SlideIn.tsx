@@ -1,30 +1,22 @@
-import { motion, MotionProps } from 'framer-motion';
+import type { FC, PropsWithChildren } from 'react';
+import { motion } from 'framer-motion';
+import { variants, transitions } from './utils';
 
-interface SlideInProps extends MotionProps {
-  children: React.ReactNode;
-  direction?: 'left' | 'right' | 'up' | 'down';
+interface SlideInProps extends PropsWithChildren {
+  direction?: 'up' | 'down' | 'left' | 'right';
   delay?: number;
 }
 
-const SlideIn = ({ 
-  children, 
-  direction = 'up', 
-  delay = 0,
-  ...props 
-}: SlideInProps) => {
-  const directions = {
-    left: { x: -20, y: 0 },
-    right: { x: 20, y: 0 },
-    up: { x: 0, y: 20 },
-    down: { x: 0, y: -20 },
-  };
+const SlideIn: FC<SlideInProps> = ({ children, direction = 'up', delay = 0 }) => {
+  const slideVariant = variants[`slide${direction.charAt(0).toUpperCase() + direction.slice(1)}`];
 
   return (
     <motion.div
-      initial={{ opacity: 0, ...directions[direction] }}
-      animate={{ opacity: 1, x: 0, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      {...props}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      variants={slideVariant}
+      transition={{ ...transitions.slide, delay }}
     >
       {children}
     </motion.div>

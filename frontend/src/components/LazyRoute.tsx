@@ -7,47 +7,65 @@ interface LazyRouteProps {
   path: string;
 }
 
-// Mapa de rutas a componentes
-const pageModules = {
-  // Root pages
-  'Landing': React.lazy(() => import('../pages/Landing')),
-  'Login': React.lazy(() => import('../pages/Login')),
-  'Register': React.lazy(() => import('../pages/Register')),
-  'Dashboard': React.lazy(() => import('../pages/Dashboard')),
-  'Profile': React.lazy(() => import('../pages/Profile')),
-  'Notifications': React.lazy(() => import('../pages/NotificationsPage')),
-  'NotFound': React.lazy(() => import('../pages/NotFound')),
-  'MenteeList': React.lazy(() => import('../pages/MenteeList')),
-  'MentorList': React.lazy(() => import('../pages/MentorList')),
-  'MatchingPage': React.lazy(() => import('../pages/MatchingPage')),
-  'MatchmakingPage': React.lazy(() => import('../pages/MatchmakingPage')),
-  'CalendarPage': React.lazy(() => import('../pages/CalendarPage')),
-  'AdminCalendarPage': React.lazy(() => import('../pages/AdminCalendarPage')),
-  'AnalyticsDashboard': React.lazy(() => import('../pages/AnalyticsDashboard')),
-  'StatisticsPage': React.lazy(() => import('../pages/StatisticsPage')),
-
-  // Mentors
-  'mentors/MentorList': React.lazy(() => import('../pages/mentors/MentorList')),
-  'mentors/MentorSearch': React.lazy(() => import('../pages/mentors/MentorSearch')),
-  'mentors/MentorDetail': React.lazy(() => import('../pages/mentors/MentorDetail')),
-
-  // Messages
-  'messages/MessageList': React.lazy(() => import('../pages/messages/MessageList')),
-  'messages/MessageDetail': React.lazy(() => import('../pages/messages/MessageDetail')),
-
-  // Settings
-  'settings/Settings': React.lazy(() => import('../pages/settings/Settings')),
-  'settings/NotificationSettings': React.lazy(() => import('../pages/settings/NotificationSettings')),
-  'settings/ProfileSettings': React.lazy(() => import('../pages/settings/ProfileSettings')),
-} as const;
-
-type PagePath = keyof typeof pageModules;
+// Utilizamos el patrón glob de Vite para importar todas las páginas de manera optimizada
+// Esto permite a Vite analizar estáticamente las importaciones
+const pages = import.meta.glob('../pages/**/*.{ts,tsx,js,jsx}');
 
 export const LazyRoute = ({ path }: LazyRouteProps) => {
-  const Component = pageModules[path as PagePath];
-  
-  if (!Component) {
-    return <ErrorScreen error={new Error(`Page not found: ${path}`)} />;
+  const [error, setError] = React.useState<Error | null>(null);
+
+  const Component = React.lazy(async () => {
+    try {
+      // Construimos la ruta exacta según el formato de los archivos en tu proyecto
+      const pagePath = `../pages/${path}.tsx`;
+      // Verificamos si la página existe
+      if (!pages[pagePath]) {
+        // Si no existe con extensión .tsx, intentamos con .jsx
+        const jsxPath = `../pages/${path}.jsx`;
+        // Si tampoco existe con .jsx, intentamos con .js
+        const jsPath = `../pages/${path}.js`;
+        // Si tampoco existe con .js, intentamos con .ts
+        const tsPath = `../pages/${path}.ts`;
+        
+        // Si no encontramos la página con ninguna extensión
+        if (!pages[jsxPath] && !pages[jsPath] && !pages[tsPath]) {
+          console.error(`No module found for path: ${path}`);
+          throw new Error(`Page not found: ${path}`);
+        }
+        
+        // Usamos la primera extensión que encontremos
+        const actualPath = pages[jsxPath] ? jsxPath : (pages[jsPath] ? jsPath : tsPath);
+        const module = await pages[actualPath]();
+        return typeof module === 'object' && 'default' in module ? module : { default: module };
+      }
+      
+      // Llamamos a la función que devuelve la importación
+      const module = await pages[pagePath]();
+      
+      // Verificamos que exista el export default
+      if (!module.default) {
+        throw new Error(`No default export found in ${path}`);
+      }
+      
+      return module;
+    } catch (error) {
+      console.error(`Error loading page: ${path}`, error);
+      setError(error as Error);
+      // Cargamos la página NotFound
+      const NotFoundPath = '../pages/NotFound.tsx';
+      if (pages[NotFoundPath]) {
+        return pages[NotFoundPath]();
+      } else {
+        // Fallback si NotFound.tsx no existe
+        return {
+          default: () => <div>Page not found</div>
+        };
+      }
+    }
+  });
+
+  if (error) {
+    return <ErrorScreen error={error} />;
   }
 
   return (

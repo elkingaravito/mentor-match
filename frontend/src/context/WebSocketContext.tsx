@@ -21,6 +21,13 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const { token } = useAuth();
 
   useEffect(() => {
+    // Skip WebSocket in development mode
+    if (import.meta.env.DEV) {
+      setIsConnected(true);
+      setLastPing(Date.now());
+      return;
+    }
+
     if (!token) return;
 
     const socketInstance = io(import.meta.env.VITE_WS_URL || 'ws://localhost:3001', {

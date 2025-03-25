@@ -1,22 +1,31 @@
+import type { FC, PropsWithChildren } from 'react';
 import { motion } from 'framer-motion';
+import { variants, transitions } from './utils';
 
-interface PageTransitionProps {
-  children: React.ReactNode;
-  className?: string;
+interface PageTransitionProps extends PropsWithChildren {
+  mode?: 'fade' | 'scale' | 'slide';
 }
 
-const PageTransition = ({ children, className }: PageTransitionProps) => {
+const PageTransition: FC<PageTransitionProps> = ({ children, mode = 'fade' }) => {
+  const getVariants = () => {
+    switch (mode) {
+      case 'scale':
+        return variants.scale;
+      case 'slide':
+        return variants.slideUp;
+      case 'fade':
+      default:
+        return variants.fadeIn;
+    }
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{
-        type: 'spring',
-        stiffness: 260,
-        damping: 20,
-      }}
-      className={className}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      variants={getVariants()}
+      transition={transitions.default}
     >
       {children}
     </motion.div>

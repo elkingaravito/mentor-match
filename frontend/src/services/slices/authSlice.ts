@@ -1,6 +1,13 @@
 import { baseApi } from '../baseApi';
 import { AuthResponse, LoginCredentials, ApiResponse, User } from '../../types/api';
 
+interface RegisterCredentials {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+}
+
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation<AuthResponse, LoginCredentials>({
@@ -22,8 +29,35 @@ export const authApi = baseApi.injectEndpoints({
         method: 'POST',
       }),
     }),
+    register: builder.mutation<AuthResponse, RegisterCredentials>({
+      query: (credentials) => ({
+        url: '/auth/register',
+        method: 'POST',
+        body: credentials,
+      }),
+    }),
     getUser: builder.query<ApiResponse<User>, void>({
-      query: () => '/auth/me',
+      queryFn: () => {
+        // Return mock user in development
+        if (import.meta.env.DEV) {
+          return {
+            data: {
+              success: true,
+              message: 'User retrieved successfully',
+              data: {
+                id: 'mock-user',
+                email: 'mock@example.com',
+                name: 'Mock User',
+                role: 'mentee'
+              }
+            }
+          };
+        }
+        return {
+          url: '/auth/me',
+          method: 'GET'
+        };
+      },
       providesTags: ['User'],
     }),
   }),
@@ -31,6 +65,7 @@ export const authApi = baseApi.injectEndpoints({
 
 export const {
   useLoginMutation,
+  useRegisterMutation,
   useRefreshTokenMutation,
   useLogoutMutation,
   useGetUserQuery,

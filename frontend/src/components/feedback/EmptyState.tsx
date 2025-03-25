@@ -7,8 +7,12 @@ import {
   useTheme,
   alpha,
 } from '@mui/material';
-import { SvgIconComponent } from '@mui/icons-material';
+import { 
+  SvgIconComponent,
+  Refresh as RefreshIcon,
+} from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import LoadingScreen from './LoadingScreen';
 
 interface EmptyStateProps {
   icon: SvgIconComponent;
@@ -21,6 +25,9 @@ interface EmptyStateProps {
   image?: string;
   variant?: 'default' | 'compact' | 'card';
   color?: 'primary' | 'secondary' | 'info' | 'warning' | 'error';
+  loading?: boolean;
+  error?: boolean;
+  retry?: () => void;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({
@@ -34,6 +41,9 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   image,
   variant = 'default',
   color = 'primary',
+  loading = false,
+  error = false,
+  retry,
 }) => {
   const theme = useTheme();
 
@@ -87,6 +97,54 @@ const EmptyState: React.FC<EmptyStateProps> = ({
         };
     }
   };
+
+  if (loading) {
+    return (
+      <LoadingScreen 
+        message="Loading..." 
+        fullScreen={false} 
+      />
+    );
+  }
+
+  if (error) {
+    return (
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        style={getStyles()}
+      >
+        <motion.div variants={itemVariants}>
+          <Typography
+            variant={variant === 'compact' ? 'h6' : 'h5'}
+            component="h2"
+            gutterBottom
+            color="error"
+          >
+            Something went wrong
+          </Typography>
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <Typography variant="body1" color="text.secondary">
+            {description || 'An error occurred while loading the content.'}
+          </Typography>
+        </motion.div>
+        {retry && (
+          <motion.div variants={itemVariants}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={retry}
+              startIcon={<RefreshIcon />}
+            >
+              Try Again
+            </Button>
+          </motion.div>
+        )}
+      </motion.div>
+    );
+  }
 
   const content = (
     <motion.div

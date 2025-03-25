@@ -3,7 +3,7 @@ import type { Notification } from '@/types/api';
 import { AppBar, Toolbar, Typography, IconButton, Box, Badge, Avatar } from '@mui/material';
 import { Menu as MenuIcon, Notifications as NotificationsIcon } from '@mui/icons-material';
 import { useAuth } from '@/context/AuthContext';
-import { useGetNotificationsQuery } from '../services/notificationsSlice';
+import { useGetNotificationsQuery } from '../services/api';
 import { WebSocketStatus } from '@/components/WebSocketStatus';
 import { useToast } from '@/components/feedback/Toast';
 
@@ -11,10 +11,11 @@ const Header = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { showToast } = useToast();
   
-  const { data: notifications = [], error: notificationsError, isFetching } = useGetNotificationsQuery(undefined, {
+  const { data: notificationsData, error: notificationsError, isFetching } = useGetNotificationsQuery(undefined, {
     skip: !isAuthenticated || isLoading,
   });
 
+  const notifications = notificationsData?.data || [];
   const unreadCount = notifications.filter(n => !n.read).length;
 
   useEffect(() => {

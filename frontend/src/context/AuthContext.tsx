@@ -35,11 +35,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const location = useLocation();
   const [refreshTokenMutation] = useRefreshTokenMutation();
   const [logoutMutation] = useLogoutMutation();
-  const { data: userData, refetch: refetchUser } = useGetUserQuery(undefined, {
-    skip: !isAuthenticated,
+  // In development, we don't need to query the user
+  const skipQuery = !isAuthenticated || import.meta.env.DEV;
+  const { data: userData, error: userError } = useGetUserQuery(undefined, { 
+    skip: skipQuery,
+    // Log any errors in development
+    onError: (error) => {
+      if (import.meta.env.DEV) {
+        console.error('User Query Error:', error);
+      }
+    }
   });
 
+  // Mock refetch function for development
+  const refetchUser = useCallback(async () => {
+    if (import.meta.env.DEV && token === 'mock-jwt-token') {
+      return;
+    }
+    // Real refetch logic here when backend is ready
+  }, [token]);
+
   const isTokenExpired = useCallback((token: string): boolean => {
+    // Don't validate mock tokens in development
+    if (import.meta.env.DEV && token === 'mock-jwt-token') {
+      return false;
+    }
+    
     try {
       const decoded = jwtDecode<JWTPayload>(token);
       return Date.now() >= decoded.exp * 1000;
@@ -49,6 +70,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const refreshToken = useCallback(async () => {
+    // Return mock token in development
+    if (import.meta.env.DEV && token === 'mock-jwt-token') {
+      return token;
+    }
+
     try {
       const response = await refreshTokenMutation().unwrap();
       setToken(response.data.token);
@@ -58,52 +84,112 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       logout();
       throw error;
     }
-  }, [refreshTokenMutation]);
+  }, [refreshTokenMutation, token]);
 
   useEffect(() => {
     const initializeAuth = async () => {
+      if (import.meta.env.DEV) {
+        console.group('Auth Initialization');
+      }
+      
       setIsLoading(true);
       setError(null);
 
       try {
-        const storedToken = localStorage.getItem('token');
+        // In development, always set mock token and user
+        if (import.meta.env.DEV) {
+          const mockToken = 'mock-jwt-token';
+          const mockUser = {
+            id: 'mock-user',
+            email: 'mock@example.com',
+            role: 'mentee',
+            name: 'Mock User'
+          };
 
-        if (storedToken) {
-          if (isTokenExpired(storedToken)) {
-            await refreshToken();
-          } else {
-            setToken(storedToken);
-            setIsAuthenticated(true);
-            await refetchUser();
+          localStorage.setItem('token', mockToken);
+          setToken(mockToken);
+          setUser(mockUser);
+          setIsAuthenticated(true);
+
+          if (import.meta.env.DEV) {
+            console.log('Development Mode:', {
+              token: mockToken,
+              user: mockUser,
+              isAuthenticated: true
+            });
+          }
+        } else {
+          const storedToken = localStorage.getItem('token');
+          if (storedToken) {
+            if (isTokenExpired(storedToken)) {
+              await refreshToken();
+            } else {
+              setToken(storedToken);
+              setIsAuthenticated(true);
+              await refetchUser();
+            }
           }
         }
       } catch (error) {
-        setError('Failed to restore session');
-        console.error('[Auth] Error initializing:', error);
+        if (!import.meta.env.DEV) {
+          setError('Failed to restore session');
+          console.error('[Auth] Error initializing:', error);
+        }
       } finally {
         setIsLoading(false);
+        if (import.meta.env.DEV) {
+          console.log('Auth State:', {
+            isLoading: false,
+            isAuthenticated,
+            user,
+            token
+          });
+          console.groupEnd();
+        }
       }
     };
 
+    // Initialize auth immediately
     initializeAuth();
-  }, [isTokenExpired, refreshToken, refetchUser]);
+
+    // Return cleanup function
+    return () => {
+      if (import.meta.env.DEV) {
+        console.log('Auth cleanup');
+      }
+    };
+  }, [isTokenExpired, refreshToken, refetchUser, token]);
 
   useEffect(() => {
+    // Skip effect for mock users in development
+    if (import.meta.env.DEV && token === 'mock-jwt-token') {
+      return;
+    }
+
     if (userData?.data) {
       setUser(userData.data);
     }
-  }, [userData]);
+  }, [userData, token]);
 
   // Token refresh interval
   useEffect(() => {
     if (!token) return;
+    
+    // Skip refresh for mock tokens in development
+    if (import.meta.env.DEV && token === 'mock-jwt-token') {
+      return;
+    }
 
-    const decoded = jwtDecode<JWTPayload>(token);
-    const expiresIn = decoded.exp * 1000 - Date.now();
-    const refreshTime = Math.max(expiresIn - 60000, 0); // Refresh 1 minute before expiry
+    try {
+      const decoded = jwtDecode<JWTPayload>(token);
+      const expiresIn = decoded.exp * 1000 - Date.now();
+      const refreshTime = Math.max(expiresIn - 60000, 0); // Refresh 1 minute before expiry
 
-    const refreshInterval = setInterval(refreshToken, refreshTime);
-    return () => clearInterval(refreshInterval);
+      const refreshInterval = setInterval(refreshToken, refreshTime);
+      return () => clearInterval(refreshInterval);
+    } catch (error) {
+      console.error('[Auth] Error setting up token refresh:', error);
+    }
   }, [token, refreshToken]);
 
   const login = useCallback((response: AuthResponse) => {

@@ -15,7 +15,8 @@ import {
   Delete as DeleteIcon,
   Inbox as InboxIcon
 } from '@mui/icons-material';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { variants, transitions, createStaggerVariants } from '../animations';
 import { useGetNotificationsQuery, useMarkNotificationReadMutation, useDeleteNotificationMutation } from '../../services/api';
 import { useToast } from '../feedback/Toast';
 import { useConfirmDialog } from '../feedback/ConfirmDialog';
@@ -93,22 +94,19 @@ const NotificationsList: React.FC = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <CircularProgress size={24} />
-      </Box>
-    );
-  }
-
-  if (error) {
+  if (isLoading || error) {
     return (
       <EmptyState
         icon={NotificationsIcon}
-        title="Error Loading Notifications"
-        description="There was a problem loading your notifications. Please try again later."
-        actionLabel="Retry"
-        onAction={() => window.location.reload()}
+        title={isLoading ? "Loading Notifications" : "Error Loading Notifications"}
+        description={
+          isLoading 
+            ? "Please wait while we fetch your notifications..." 
+            : "There was a problem loading your notifications. Please try again later."
+        }
+        loading={isLoading}
+        error={!!error}
+        retry={() => window.location.reload()}
       />
     );
   }
@@ -123,23 +121,47 @@ const NotificationsList: React.FC = () => {
     );
   }
 
+  const containerVariants = createStaggerVariants(0.05, 0.1);
+  const notificationVariants = {
+    ...variants.listItem,
+    hover: {
+      ...variants.listItem.hover,
+      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+    },
+  };
+
   return (
-    <Paper sx={styles.container}>
+    <Paper 
+      component={motion.div}
+      variants={variants.fadeIn}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={transitions.spring.default}
+      sx={styles.container}
+    >
       <Typography variant="h6" component="h2" gutterBottom>
         Recent Notifications
       </Typography>
-      <List sx={{ p: 0 }}>
-        {notifications.slice(0, 5).map((notification) => (
+      <List 
+        component={motion.ul}
+        variants={containerVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        sx={{ p: 0 }}
+      >
+        <AnimatePresence mode="popLayout">
+          {notifications.slice(0, 5).map((notification) => (
           <motion.div
             key={notification.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{
-              type: 'spring',
-              stiffness: 500,
-              damping: 30
-            }}
+            variants={notificationVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            whileHover="hover"
+            whileTap="tap"
+            layout
           >
             <ListItem
               sx={styles.listItem}
@@ -147,6 +169,7 @@ const NotificationsList: React.FC = () => {
                 <Box sx={styles.actionButtons}>
                   {!notification.read && (
                     <motion.div
+                      variants={variants.scaleIn}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       style={{ display: 'inline-block' }}
@@ -206,7 +229,8 @@ const NotificationsList: React.FC = () => {
               />
             </ListItem>
           </motion.div>
-        ))}
+          ))}
+        </AnimatePresence>
       </List>
     </Paper>
   );

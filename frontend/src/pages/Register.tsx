@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { useFormik } from 'formik';
+import * as yup from 'yup';
+import { AuthResponse } from '../types/api';
 import {
   Box,
   Paper,
@@ -12,65 +15,90 @@ import {
   Radio,
   Alert,
   Link,
+  CircularProgress,
 } from '@mui/material';
+import { useToast } from '../components/feedback/Toast';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+const validationSchema = yup.object({
+  name: yup
+    .string()
+    .required('Name is required')
+    .min(2, 'Name should be at least 2 characters'),
+  email: yup
+    .string()
+    .email('Enter a valid email')
+    .required('Email is required'),
+  password: yup
+    .string()
+    .min(8, 'Password should be at least 8 characters')
+    .required('Password is required'),
+  confirmPassword: yup
+    .string()
+    .oneOf([yup.ref('password')], 'Passwords must match')
+    .required('Please confirm your password'),
+  role: yup
+    .string()
+    .oneOf(['mentor', 'mentee'], 'Please select a valid role')
+    .required('Please select a role'),
+});
+
 const Register = () => {
   const { login } = useAuth();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: 'mentee',
-  });
+  const { showToast } = useToast();
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setError('');
-    setIsLoading(true);
+  const formik = useFormik({
+    initialValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      role: 'mentee',
+    },
+    validationSchema: validationSchema,
+    onSubmit: async (values, { setSubmitting }) => {
+      setError('');
+      try {
+        setError('');
+        
+        // Validate passwords match
+        if (values.password !== values.confirmPassword) {
+          throw new Error('Passwords do not match');
+        }
 
-    if (formData.password !== formData.confirmPassword) {
-      setIsLoading(false);
-      setError('Passwords do not match');
-      return;
-    }
-
-    try {
-      // En un entorno real, esto sería una llamada a la API
-      const mockToken = 'mock-jwt-token';
-      const mockUser = {
-        id: 1,
-        name: formData.name,
-        email: formData.email,
-        role: formData.role,
-      };
-
-      // Simulamos un delay para mostrar el loading state
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      login(mockToken, mockUser);
-      showToast('Registration successful!', 'success');
-    } catch (err) {
-      const errorMessage = 'Failed to register. Please try again.';
-      setError(errorMessage);
-      showToast(errorMessage, 'error');
-      console.error('Registration error:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+        // TODO: Replace with actual API call when backend is ready
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Mock successful registration response
+        const response: AuthResponse = {
+          success: true,
+          message: 'Registration successful',
+          data: {
+            token: 'mock-jwt-token',
+            user: {
+              id: `user-${Date.now()}`,
+              name: values.name,
+              email: values.email,
+              role: values.role,
+            }
+          }
+        };
+        
+        login(response);
+        showToast('Registration successful!', 'success');
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to register. Please try again.';
+        setError(errorMessage);
+        showToast(errorMessage, 'error');
+        console.error('Registration error:', err);
+      } finally {
+        setSubmitting(false);
+      }
+    },
+  });
 
   return (
     <Box
@@ -98,13 +126,7 @@ const Register = () => {
         </Typography>
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        {isLoading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-            <CircularProgress size={24} />
-          </Box>
-        )}
-
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={formik.handleSubmit}>
           <TextField
             fullWidth
             id="name"
@@ -183,15 +205,29 @@ const Register = () => {
             </RadioGroup>
           </FormControl>
 
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3 }}
-            disabled={formik.isSubmitting}
-          >
-            {formik.isSubmitting ? 'Creating account...' : 'Register'}
-          </Button>
+          <Box position="relative">
+              <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3 }}
+              disabled={formik.isSubmitting}
+              >
+              {formik.isSubmitting ? 'Creating account...' : 'Register'}
+              </Button>
+              {formik.isSubmitting && (
+              <CircularProgress
+                  size={24}
+                  sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  marginTop: '8px',
+                  marginLeft: '-12px',
+                  }}
+              />
+              )}
+          </Box>
         </form>
 
         <Typography variant="body2" align="center" sx={{ mt: 2 }}>
